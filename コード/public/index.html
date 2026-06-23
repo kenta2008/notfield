@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>対戦1vs1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="notice">
+        <h3>現在スマホ版ではプレイできません!!</h3>
+    </div>
+    <div class="screen">
+        <div id="setup-screen" class="setup">
+            <h1>参加するプレイヤーを選択してください</h1>
+            <div class="buttons">
+                <button onclick="choosePlayer('player1')" class="selectbutton1">ユーザー1</button>
+            </div>
+            <div class="buttons2">
+                <button onclick="choosePlayer('player2')" class="selectbutton2">ユーザー2</button>
+            </div>
+            <div id="name-setup" class="name-setup" style="display: none;">
+                <p id="name-setup-label">名前を入力してください</p>
+                <input id="player-name-input" type="text" maxlength="8" autocomplete="off" placeholder="名前">
+                <button type="button" onclick="confirmPlayerName()" class="name-start-button">決定</button>
+            </div>
+        </div>
+        <div class="gameoya" style="display: none;">
+            <div id="game-screen" style="display: none;">
+                <div class="game-top-bar">
+                    <button type="button" class="top-menu-button training-button"><span class="top-menu-icon">&larr;</span><span>&#20462;&#34892;</span></button>
+                    <div id="round-label" class="round-label">G.F.1</div>
+                    <button type="button" class="top-menu-button book-button"><span class="book-icon" aria-hidden="true"></span><span>&#25945;&#20856;</span></button>
+                </div>
+                <div id="victory-screen" class="victory-screen" style="display: none;">
+                    <div class="victory-panel">
+                        <div class="victory-kicker">RESULT</div>
+                        <h2 id="victory-title">player1 WIN</h2>
+                        <p id="victory-message">勝利しました</p>
+                        <button type="button" onclick="resetGame()" class="victory-reset-button">もう一度遊ぶ</button>
+                    </div>
+                </div>
+                <div class="select">
+                    <div class="player1">
+                        <h3 id="player1-name-title">player1</h3>
+                        <div id="battle-log-player1" class="battle-log"></div>
+                    </div>
+                    <div id="attack-arrow" class="attack-arrow">&rarr;</div>
+                    <div class="player2">
+                        <h3 id="player2-name-title">player2</h3>
+                        <div id="battle-log-player2" class="battle-log"></div>
+                    </div>
+                    <div class="hparea">
+                        <div class="status status1"><p id="player1-status-name" style="margin-right: 20px;">player1</p><span style="color: #008f6f; font-size: 16px;">HP</span> <span id="myhp" style="color: #4f4f4f; font-size: 17px;">50</span></div>
+                        <div class="status status2"><p id="player2-status-name" style="margin-right: 20px;">player2</p><span style="color: #008f6f; font-size: 16px;">HP</span> <span id="tekihp" style="color: #4f4f4f; font-size: 17px;">50</span></div>
+                    </div>
+                </div>
+                <div id="timer-bar-wrap">
+                    <div id="timer-bar"></div>
+                </div>
+                <div id="my-screen" class="screen-area">
+                    <div id="my-hand" class="hand-area"></div>
+                </div>
+                <div id="enemy-screen" class="screen-area">
+                    <div id="teki-hand" class="hand-area"></div>
+                </div>
+                <div class="game-bottom-bar">
+                    <div id="bottom-player-name" class="bottom-player-name">player1</div>
+                    <div class="volume-control" aria-label="音量">
+                        <span class="volume-icon" aria-hidden="true"></span>
+                        <div id="volume-meter" class="volume-meter" role="group" aria-label="音量調節">
+                            <button type="button" class="volume-step" data-volume="10" aria-label="音量 10%"></button>
+                            <button type="button" class="volume-step" data-volume="20" aria-label="音量 20%"></button>
+                            <button type="button" class="volume-step" data-volume="30" aria-label="音量 30%"></button>
+                            <button type="button" class="volume-step" data-volume="40" aria-label="音量 40%"></button>
+                            <button type="button" class="volume-step" data-volume="50" aria-label="音量 50%"></button>
+                            <button type="button" class="volume-step" data-volume="60" aria-label="音量 60%"></button>
+                            <button type="button" class="volume-step" data-volume="70" aria-label="音量 70%"></button>
+                            <button type="button" class="volume-step" data-volume="80" aria-label="音量 80%"></button>
+                            <button type="button" class="volume-step" data-volume="90" aria-label="音量 90%"></button>
+                            <button type="button" class="volume-step" data-volume="100" aria-label="音量 100%"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p>テスト用</p>
+    <button onclick="resetGame()" style="padding: 5px 10px; cursor: pointer; font-weight: bold;">強制リセット</button>
+    <script type="module" src="script.js"></script>
+</body>
+</html>

@@ -1,18 +1,4 @@
-﻿
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "myapiKey",
-  authDomain: "myauthDomain",
-  databaseURL: "mydatabaseURL",
-  projectId: "myprojectId",
-  storageBucket: "mystorageBucket",
-  messagingSenderId: "mymessagingSenderId",
-  appId: "myappId"
-};
-
-
+//firebaseの初期設定記述は飛ばしている
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
 const myhp = document.getElementById("myhp");
@@ -73,6 +59,7 @@ const CARDS = {
 
 
 const cardKeys = Object.keys(CARDS);
+const MAX_HAND_CARDS = 8;
 const CARD_DRAW_WEIGHTS = {
     heal: 0.4,
     defense: 1.0,
@@ -139,6 +126,8 @@ const KO_SOUND_SRC = "se/ko.mp3";
 const SELECT_SOUND_SRC = "se/select.mp3";
 const CARD_DRAW_SOUND_GAP_MS = 180;
 const HAND_CARD_FEED_IN_GAP_MS = 180;
+const TURN_NOTICE_MS = 1400;
+const CONTROL_RANDOM_PREVIEW_MS = 650;
 let shouldAnimateHandFeedIn = false;
 let shouldAnimateHandSortAfterFeedIn = false;
 let freshHandIndexesGlobal = {
@@ -185,6 +174,7 @@ let currentRoundGlobal = 1;
 let currentTurnGlobal = "player1";
 let hasObservedGameState = false;
 let lastKoSoundKey = null;
+let lastTurnNoticeKey = null;
 let masterVolume = Number(localStorage.getItem("notfield_volume") ?? 75) / 100;
 
 function updateRoundDisplay(round = currentRoundGlobal) {
@@ -194,6 +184,7 @@ function updateRoundDisplay(round = currentRoundGlobal) {
 
 function canPlayGameSound() {
     return !!myPlayerRole
+        && gameStartedGlobal
         && gameOyaDiv?.style.display !== "none"
         && gameScreenDiv?.style.display !== "none";
 }
@@ -209,6 +200,39 @@ function playSound(src, delayMs = 0, volume = 0.75) {
 
 function playCardDrawSound(delayMs = 0) {
     playSound(CARD_DRAW_SOUND_SRC, delayMs, 0.75);
+}
+
+function hideTurnNotice() {
+    const notice = document.getElementById("turn-notice");
+    if (!notice) return;
+    clearTimeout(showTurnNotice.hideTimer);
+    notice.classList.remove("is-visible", "is-waiting");
+}
+
+function showTurnNotice(message = "あなたの番です", persist = false) {
+    if (!gameScreenDiv || gameScreenDiv.style.display === "none") return;
+
+    let notice = document.getElementById("turn-notice");
+    if (!notice) {
+        notice = document.createElement("div");
+        notice.id = "turn-notice";
+        notice.className = "turn-notice";
+        gameScreenDiv.appendChild(notice);
+    }
+    notice.textContent = message;
+    notice.dataset.message = message;
+
+    notice.classList.remove("is-visible");
+    notice.classList.toggle("is-waiting", persist);
+    notice.getBoundingClientRect();
+    notice.classList.add("is-visible");
+
+    clearTimeout(showTurnNotice.hideTimer);
+    if (!persist) {
+        showTurnNotice.hideTimer = setTimeout(() => {
+            notice.classList.remove("is-visible", "is-waiting");
+        }, TURN_NOTICE_MS);
+    }
 }
 
 function playCardDrawSoundSequence(count) {
@@ -424,6 +448,20 @@ function getHandByRole(role) {
     return role === "player1" ? myHand : tekiHand;
 }
 
+function normalizeHand(hand) {
+    return Array.isArray(hand) ? hand.slice(0, MAX_HAND_CARDS) : [];
+}
+
+function getHandOpenSlots(role) {
+    const hand = getHandByRole(role);
+    return Math.max(0, MAX_HAND_CARDS - (Array.isArray(hand) ? hand.length : 0));
+}
+
+function getPendingDrawCapacity(role) {
+    const currentPending = pendingDrawsGlobal[role] || 0;
+    return Math.max(0, getHandOpenSlots(role) - currentPending);
+}
+
 function getRoleHp(role) {
     return role === myPlayerRole ? mycurrenthp : tekicurrenthp;
 }
@@ -450,7 +488,8 @@ function setRoleDefense(role, defense) {
 
 function reserveDrawForRole(role, count = 1) {
     if (!role || count <= 0) return;
-    pendingDrawsGlobal[role] = (pendingDrawsGlobal[role] || 0) + count;
+    const reserveCount = Math.min(count, getPendingDrawCapacity(role));
+    pendingDrawsGlobal[role] = (pendingDrawsGlobal[role] || 0) + reserveCount;
 }
 
 function getRandomPlayerRole() {
@@ -656,7 +695,18 @@ function executeControlledRandomAction() {
 
     clearCardActionDisplays();
     selectedCardIndex = null;
+    update(gameRoomRef, {
+        selected_card: {
+            id: Date.now(),
+            player: actorRole,
+            label: "ランダム",
+            randomPending: true,
+            keep: true,
+            showOnTurn: actorRole
+        }
+    });
 
+    setTimeout(() => {
     const randomIndex = Math.floor(Math.random() * actorHand.length);
     const randomCardKey = actorHand[randomIndex];
     const randomCard = CARDS[randomCardKey];
@@ -729,9 +779,11 @@ function executeControlledRandomAction() {
 
     const nextTurnRole = getRoleHp("player1") <= 0 || getRoleHp("player2") <= 0 ? "end" : nextTurn;
     sendGameState(nextTurnRole, 0, null, "", actionResult, handEffect, nextControlEffect, keepUsedCardForTurn(usedCardInfo, nextTurnRole));
+    }, CONTROL_RANDOM_PREVIEW_MS);
 }
 
 function maybeRunControlledRound() {
+    if (!gameStartedGlobal) return;
     const remaining = getControlRemaining();
     const actionKey = controlEffectGlobal ? `${controlEffectGlobal.id}:${remaining}` : null;
 
@@ -1016,6 +1068,7 @@ function renderSelectedCardInfoV2() {
 }
 
 function setAttackTarget(role) {
+    if (!gameStartedGlobal) return;
     if (pendingAttackGlobal > 0) return;
     const selectedCard = getSelectedCard();
     if (selectedCard?.type === "attack") {
@@ -1047,6 +1100,7 @@ function updateAttackTargetDisplay(attackerRole = myPlayerRole, targetRole = sel
 }
 
 function handlePlayerAreaClick() {
+    if (!gameStartedGlobal) return;
     if (!isMyTurnGlobal) return;
     if (selectedCardIndex === null && pendingAttackGlobal <= 0) return;
     executeCard();
@@ -1059,6 +1113,7 @@ status2Div?.addEventListener("click", () => setAttackTarget("player2"));
 
 
 window.selectCard = function(handIndex) {
+    if (!gameStartedGlobal) return;
     if (!isMyTurnGlobal) return; // 自分のターン以外は選択できない
 
     const cardKey = (myPlayerRole === "player1") ? myHand[handIndex] : tekiHand[handIndex];
@@ -1271,14 +1326,15 @@ function renderResultPanelDisplay(result) {
 
 function reserveDrawForCurrentPlayer(count = 1) {
     if (!myPlayerRole) return;
-    pendingDrawsGlobal[myPlayerRole] = (pendingDrawsGlobal[myPlayerRole] || 0) + count;
+    reserveDrawForRole(myPlayerRole, count);
 }
 
 function refillPendingDrawsForRole(role) {
     const drawCount = pendingDrawsGlobal[role] || 0;
     if (drawCount <= 0) return;
+    const actualDrawCount = Math.min(drawCount, getHandOpenSlots(role));
 
-    for (let i = 0; i < drawCount; i++) {
+    for (let i = 0; i < actualDrawCount; i++) {
         if (role === "player1") {
             myHand.push(drawRandomCard());
             if (myPlayerRole === "player1") freshHandIndexesGlobal.player1.add(myHand.length - 1);
@@ -1288,8 +1344,8 @@ function refillPendingDrawsForRole(role) {
         }
     }
 
-    if (role === myPlayerRole) {
-        playCardDrawSoundSequence(drawCount);
+    if (role === myPlayerRole && actualDrawCount > 0) {
+        playCardDrawSoundSequence(actualDrawCount);
     }
 
     pendingDrawsGlobal[role] = 0;
@@ -1311,6 +1367,7 @@ function markFreshCardsFromHandGrowth(role, oldLength, newLength) {
 
 
 window.executeCard = function() {
+    if (!gameStartedGlobal) return;
     if (!isMyTurnGlobal) return;
 
     if (pendingAttackGlobal > 0) {
@@ -1464,6 +1521,8 @@ window.executeCard = function() {
         updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
         // addLog(`回復しました`);
     } else if (card.type === "defense") {
+        mydefense = 0;
+        selectedDefenseCards[myPlayerRole] = [];
         actionResult = {
             id: Date.now(),
             player: myPlayerRole,
@@ -1721,7 +1780,48 @@ function showLog(log) {
 const gameRoomRef = ref(db, "gameRoom");
 let myPlayerRole = null;
 let isMyTurnGlobal = false;
+let gameStartedGlobal = false;
 let gameRoomUnsubscribe = null;
+
+function isRoleJoined(data, role) {
+    return typeof data?.[`${role}_name`] === "string" && data[`${role}_name`].trim() !== "";
+}
+
+function getWaitingRole(data) {
+    if (!isRoleJoined(data, "player1")) return "player1";
+    if (!isRoleJoined(data, "player2")) return "player2";
+    return null;
+}
+
+function handleWaitingForOpponent(data) {
+    const waitingRole = getWaitingRole(data);
+    if (!waitingRole) return false;
+
+    gameStartedGlobal = false;
+    isMyTurnGlobal = false;
+    pendingAttackGlobal = 0;
+    selectedCardIndex = null;
+    selectedBoostCardIndexes = [];
+    lastTimerStateKey = null;
+    stopTimer();
+    clearSelectedDefenseCards();
+    clearCardActionDisplays();
+    hideHandHoverPreview();
+    myHandDiv.innerHTML = "";
+    tekiHandDiv.innerHTML = "";
+    currentRoundGlobal = data.round || 1;
+    currentTurnGlobal = data.turn || "player1";
+    updateRoundDisplay(currentRoundGlobal);
+    playerNames = {
+        player1: data.player1_name || DEFAULT_PLAYER_NAMES.player1,
+        player2: data.player2_name || DEFAULT_PLAYER_NAMES.player2
+    };
+    updatePlayerNameDisplay();
+    myhp.textContent = data.player1_hp ?? 50;
+    tekihp.textContent = data.player2_hp ?? 50;
+    showTurnNotice(`${DEFAULT_PLAYER_NAMES[waitingRole]}を待っています`, true);
+    return true;
+}
 
 window.choosePlayer = function(role) {
     hideVictoryScreen();
@@ -1743,17 +1843,16 @@ window.confirmPlayerName = function() {
     shouldAnimateHandSortAfterFeedIn = true;
     updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
 
-    if (role === "player1") {
-        isMyTurnGlobal = true;
-    } else {
-        isMyTurnGlobal = false;
-    }
+    isMyTurnGlobal = false;
+    gameStartedGlobal = false;
 
     document.getElementById("setup-screen").style.display = "none";
     if (gameOyaDiv) gameOyaDiv.style.display = "block";
     document.getElementById("game-screen").style.display = "block";
 
-    renderHands();
+    myHandDiv.innerHTML = "";
+    tekiHandDiv.innerHTML = "";
+    showTurnNotice(`${DEFAULT_PLAYER_NAMES[getOpponentRole(role)]}を待っています`, true);
     update(gameRoomRef, {
         [`${role}_name`]: playerName
     });
@@ -1768,14 +1867,30 @@ window.confirmPlayerName = function() {
         return; 
 
     }
+    if (handleWaitingForOpponent(data)) {
+        hasObservedGameState = true;
+        return;
+    }
+    if (!gameStartedGlobal) {
+        hideTurnNotice();
+        lastTurnNoticeKey = null;
+        shouldAnimateHandFeedIn = true;
+        shouldAnimateHandSortAfterFeedIn = true;
+    }
+    gameStartedGlobal = true;
+
     const incomingTurn = data.turn || currentTurnGlobal;
-    if (
-        hasObservedGameState
-        && incomingTurn !== currentTurnGlobal
-        && incomingTurn !== "end"
-        && incomingTurn === myPlayerRole
-    ) {
-        playSound(TURN_SOUND_SRC, 0, 0.8);
+    const turnNoticeKey = `${data.reset_trigger || "game"}:${data.round || 1}:${incomingTurn}:${data.pending_attack || 0}`;
+    if (incomingTurn !== "end" && turnNoticeKey !== lastTurnNoticeKey) {
+        lastTurnNoticeKey = turnNoticeKey;
+        const isMyTurnNotice = incomingTurn === myPlayerRole;
+        showTurnNotice(isMyTurnNotice
+            ? ((data.pending_attack || 0) > 0 ? "守備の番です" : "あなたの番です")
+            : "相手の番です"
+        );
+        if (isMyTurnNotice && hasObservedGameState && incomingTurn !== currentTurnGlobal) {
+            playSound(TURN_SOUND_SRC, 0, 0.8);
+        }
     }
 
     const player1Ko = Number(data.player1_hp) <= 0;
@@ -1840,11 +1955,11 @@ window.confirmPlayerName = function() {
     const oldPlayer1HandLength = myHand.length;
     const oldPlayer2HandLength = tekiHand.length;
     if (data.player1_hand) {
-        myHand = data.player1_hand;
+        myHand = normalizeHand(data.player1_hand);
         markFreshCardsFromHandGrowth("player1", oldPlayer1HandLength, myHand.length);
     }
     if (data.player2_hand) {
-        tekiHand = data.player2_hand;
+        tekiHand = normalizeHand(data.player2_hand);
         markFreshCardsFromHandGrowth("player2", oldPlayer2HandLength, tekiHand.length);
     }
 
@@ -1919,14 +2034,18 @@ if (sc && sc.player && (sc.player !== myPlayerRole || sc.keep)) {
     if (targetDiv) {
         const infoDiv = document.createElement("div");
         infoDiv.className = "selected-card-info-remote";
-        const boosts = Array.isArray(sc.boosts)
-            ? sc.boosts
-            : (sc.boostName ? [{ name: sc.boostName, label: sc.boostLabel || BOOST_LABEL, description: sc.boostDescription, imgSrc: sc.boostImgSrc }] : []);
-        const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34)).join("");
-        infoDiv.innerHTML = `
-            ${renderCardInfoBlock(sc, sc.label)}
-            ${boostHtml}
-        `;
+        if (sc.randomPending) {
+            infoDiv.innerHTML = `<div class="random-card-display">ランダム</div>`;
+        } else {
+            const boosts = Array.isArray(sc.boosts)
+                ? sc.boosts
+                : (sc.boostName ? [{ name: sc.boostName, label: sc.boostLabel || BOOST_LABEL, description: sc.boostDescription, imgSrc: sc.boostImgSrc }] : []);
+            const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34)).join("");
+            infoDiv.innerHTML = `
+                ${renderCardInfoBlock(sc, sc.label)}
+                ${boostHtml}
+            `;
+        }
         targetDiv.appendChild(infoDiv);
         if (sc.keep) {
             const selectedCardId = sc.id || `${sc.player}-${sc.name}-${sc.showOnTurn || ""}`;
@@ -2029,6 +2148,9 @@ function sendGameState(nextTurnRole, pendingAttackValue = 0, attackCardInfo = nu
         refillPendingDrawsAtActionEnd();
     }
 
+    myHand = normalizeHand(myHand);
+    tekiHand = normalizeHand(tekiHand);
+
     if (myPlayerRole === "player1") {
         p1_hp = mycurrenthp;
         p2_hp = tekicurrenthp;
@@ -2098,8 +2220,10 @@ window.resetGame = function() {
     currentTurnGlobal = "player1";
     hasObservedGameState = false;
     lastKoSoundKey = null;
+    lastTurnNoticeKey = null;
     myPlayerRole = null;
     isMyTurnGlobal = false;
+    gameStartedGlobal = false;
     controlEffectGlobal = null;
     controlledActionInProgress = false;
     lastControlledActionKey = null;
@@ -2116,12 +2240,13 @@ window.resetGame = function() {
     document.getElementById("my-screen")?.classList.remove("hand-screen-hidden");
     document.getElementById("enemy-screen")?.classList.remove("hand-screen-hidden");
     clearCardActionDisplays();
+    hideTurnNotice();
     if (gameOyaDiv) gameOyaDiv.style.display = "none";
     document.getElementById("game-screen").style.display = "none";
     document.getElementById("setup-screen").style.display = "block";
     let p1Hand = [];
     let p2Hand = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < MAX_HAND_CARDS; i++) {
         p1Hand.push(drawRandomCard());
         p2Hand.push(drawRandomCard());
     }
@@ -2253,7 +2378,10 @@ function updateTimerBar() {
 }
 
 function resetTimerWhenTurnStateChanges(turnRole, pendingAttackValue) {
-    if (!myPlayerRole) return;
+    if (!myPlayerRole || !gameStartedGlobal) {
+        stopTimer();
+        return;
+    }
 
     const stateKey = `${turnRole}:${pendingAttackValue}:${myPlayerRole}`;
     const stateChanged = stateKey !== lastTimerStateKey;
@@ -2282,6 +2410,10 @@ const _origOnValueCallback = onValue;
 
 
 const handObserver = new MutationObserver(() => {
+    if (!gameStartedGlobal) {
+        stopTimer();
+        return;
+    }
     const myHandDiv = document.getElementById("my-hand");
     const tekiHandDiv = document.getElementById("teki-hand");
     const activeDiv = (myPlayerRole === "player1") ? myHandDiv : tekiHandDiv;
@@ -2307,3 +2439,9 @@ const screenObserver = new MutationObserver(() => {
     }
 });
 screenObserver.observe(gameScreen, { attributes: true, attributeFilter: ["style"] });
+
+["copy", "cut", "contextmenu", "dragstart"].forEach(eventName => {
+    document.addEventListener(eventName, event => {
+        event.preventDefault();
+    });
+});

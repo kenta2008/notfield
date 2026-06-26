@@ -1,4 +1,3 @@
-//firebaseの初期設定記述は飛ばしている
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
 const myhp = document.getElementById("myhp");
@@ -152,6 +151,7 @@ const victoryTitle = document.getElementById("victory-title");
 const victoryMessage = document.getElementById("victory-message");
 const roundLabel = document.getElementById("round-label");
 const bottomPlayerName = document.getElementById("bottom-player-name");
+const cardBookBottomPlayerName = document.getElementById("card-book-bottom-player-name");
 const volumeMeters = [...document.querySelectorAll(".volume-meter")];
 const volumeSteps = [...document.querySelectorAll(".volume-step")];
 const nameSetupDiv = document.getElementById("name-setup");
@@ -163,6 +163,11 @@ const player1StatusName = document.getElementById("player1-status-name");
 const player2StatusName = document.getElementById("player2-status-name");
 const gameOyaDiv = document.querySelector(".gameoya");
 const trainingButton = document.querySelector(".training-button");
+const bookButton = document.querySelector(".book-button");
+const cardBookPopup = document.getElementById("card-book-popup");
+const cardBookContainer = document.getElementById("card-book-container");
+const cardBookCloseButton = document.getElementById("card-book-close");
+const cardBookFilterButtons = [...document.querySelectorAll(".card-book-filter")];
 
 const DEFAULT_PLAYER_NAMES = {
     player1: "player1",
@@ -333,6 +338,7 @@ function updatePlayerNameDisplay() {
     if (player1StatusName) player1StatusName.textContent = p1Name;
     if (player2StatusName) player2StatusName.textContent = p2Name;
     if (bottomPlayerName) bottomPlayerName.textContent = getPlayerDisplayName(myPlayerRole || "player1");
+    if (cardBookBottomPlayerName) cardBookBottomPlayerName.textContent = getPlayerDisplayName(myPlayerRole || "player1");
     fitPlayerNameDisplay();
 }
 
@@ -2141,6 +2147,88 @@ trainingButton?.addEventListener("click", () => {
     window.resetGame?.();
 });
 
+function getBookCardTypeLabel(type) {
+    if (type === "attack") return "攻撃";
+    if (type === "defense") return "守備";
+    if (type === "heal") return "回復";
+    return "特殊";
+}
+
+function getBookCardValueLabel(card) {
+    if (!card) return "-";
+    if (card === CARDS.enadori) return "x2";
+    if (card.type === "attack") return card.value || "-";
+    if (card.type === "defense") return card.value || "-";
+    if (card.type === "heal") return card.value || "-";
+    return "-";
+}
+
+function renderCardBook(filter = "all") {
+    if (!cardBookContainer) return;
+    cardBookContainer.innerHTML = "";
+
+    Object.entries(CARDS)
+        .filter(([, card]) => filter === "all" || card.type === filter)
+        .forEach(([cardKey, card]) => {
+            const slot = document.createElement("button");
+            slot.type = "button";
+            slot.className = "card-book-slot";
+            slot.dataset.type = card.type;
+            slot.dataset.cardKey = cardKey;
+            slot.setAttribute("aria-label", `${card.name}: ${card.description}`);
+            slot.innerHTML = `
+                <span class="card-book-icon-wrap" aria-hidden="true">
+                    <img class="card-book-icon" src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                    <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
+                </span>
+                <span class="card-book-preview" role="tooltip">
+                    <span class="card-book-preview-top">
+                        <span class="card-book-preview-type">${getBookCardTypeLabel(card.type)}</span>
+                        <span class="card-book-preview-power">${getBookCardValueLabel(card)}</span>
+                    </span>
+                    <span class="card-book-preview-art">
+                        <img src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                        <span class="card-book-preview-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
+                    </span>
+                    <span class="card-book-preview-name">${card.name}</span>
+                    <span class="card-book-preview-text">${card.description}</span>
+                </span>
+            `;
+            cardBookContainer.appendChild(slot);
+        });
+}
+
+function openCardBook() {
+    if (!cardBookPopup) return;
+    renderCardBook(document.querySelector(".card-book-filter.is-active")?.dataset.filter || "all");
+    cardBookPopup.classList.add("is-open");
+    cardBookPopup.setAttribute("aria-hidden", "false");
+}
+
+function closeCardBook() {
+    if (!cardBookPopup) return;
+    cardBookPopup.classList.remove("is-open");
+    cardBookPopup.setAttribute("aria-hidden", "true");
+}
+
+bookButton?.addEventListener("click", openCardBook);
+cardBookCloseButton?.addEventListener("click", closeCardBook);
+cardBookPopup?.addEventListener("click", event => {
+    if (event.target === cardBookPopup) closeCardBook();
+});
+cardBookFilterButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        cardBookFilterButtons.forEach(item => item.classList.remove("is-active"));
+        button.classList.add("is-active");
+        renderCardBook(button.dataset.filter);
+    });
+});
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && cardBookPopup?.classList.contains("is-open")) {
+        closeCardBook();
+    }
+});
+
 function sendGameState(nextTurnRole, pendingAttackValue = 0, attackCardInfo = null, logMessage = "", damageResult = null, handEffect = null, controlEffect = undefined, selectedCardInfo = null) {
     let p1_hp, p2_hp, p1_def, p2_def;
 
@@ -2211,6 +2299,7 @@ let lastResetTrigger = 0;
 window.resetGame = function() {
     shouldAnimateHandFeedIn = true;
     shouldAnimateHandSortAfterFeedIn = true;
+    closeCardBook();
     hideVictoryScreen();
     hideNameSetup();
     resetPlayerNames();

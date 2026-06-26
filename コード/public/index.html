@@ -27,7 +27,7 @@
                 <div class="game-top-bar">
                     <button type="button" class="top-menu-button training-button"><span class="top-menu-icon">&larr;</span><span>&#20462;&#34892;</span></button>
                     <div id="round-label" class="round-label">G.F.1</div>
-                    <button type="button" class="top-menu-button book-button"><span class="book-icon" aria-hidden="true"></span><span>&#25945;&#20856;</span></button>
+                    <button type="button" class="top-menu-button book-button"><span class="book-icon" aria-hidden="true"></span><span>カード紹介</span></button>
                 </div>
                 <div id="victory-screen" class="victory-screen" style="display: none;">
                     <div class="victory-panel">
@@ -35,6 +35,44 @@
                         <h2 id="victory-title">player1 WIN</h2>
                         <p id="victory-message">勝利しました</p>
                         <button type="button" onclick="resetGame()" class="victory-reset-button">もう一度遊ぶ</button>
+                    </div>
+                </div>
+                <div id="card-book-popup" class="card-book-popup" aria-hidden="true">
+                    <div class="card-book-panel" role="dialog" aria-modal="true" aria-label="カード紹介">
+                        <div class="card-book-top-bar">
+                            <div class="card-book-top-spacer" aria-hidden="true"></div>
+                            <div class="card-book-title-pill">カード紹介</div>
+                            <button type="button" id="card-book-close" class="top-menu-button card-book-close-button" aria-label="カード紹介を閉じる"><span class="book-icon" aria-hidden="true"></span><span>カード紹介閉じる</span></button>
+                        </div>
+                        <div class="card-book-layout">
+                            <aside class="card-book-sidebar" aria-label="カードフィルター">
+                                <button class="card-book-filter is-active" type="button" data-filter="all">すべて</button>
+                                <button class="card-book-filter" type="button" data-filter="attack">攻撃</button>
+                                <button class="card-book-filter" type="button" data-filter="defense">守備</button>
+                                <button class="card-book-filter" type="button" data-filter="heal">回復</button>
+                            </aside>
+                            <section class="card-book-play-area" aria-label="カード一覧">
+                                <div id="card-book-container" class="card-book-container"></div>
+                            </section>
+                        </div>
+                        <div class="card-book-bottom-bar">
+                            <div id="card-book-bottom-player-name" class="card-book-bottom-player-name">player1</div>
+                            <div class="volume-control" aria-label="音量">
+                                <span class="volume-icon" aria-hidden="true"></span>
+                                <div class="volume-meter" role="group" aria-label="音量調節">
+                                    <button type="button" class="volume-step" data-volume="10" aria-label="音量 10%"></button>
+                                    <button type="button" class="volume-step" data-volume="20" aria-label="音量 20%"></button>
+                                    <button type="button" class="volume-step" data-volume="30" aria-label="音量 30%"></button>
+                                    <button type="button" class="volume-step" data-volume="40" aria-label="音量 40%"></button>
+                                    <button type="button" class="volume-step" data-volume="50" aria-label="音量 50%"></button>
+                                    <button type="button" class="volume-step" data-volume="60" aria-label="音量 60%"></button>
+                                    <button type="button" class="volume-step" data-volume="70" aria-label="音量 70%"></button>
+                                    <button type="button" class="volume-step" data-volume="80" aria-label="音量 80%"></button>
+                                    <button type="button" class="volume-step" data-volume="90" aria-label="音量 90%"></button>
+                                    <button type="button" class="volume-step" data-volume="100" aria-label="音量 100%"></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="select">

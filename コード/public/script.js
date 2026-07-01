@@ -8,14 +8,6 @@ let tekicurrenthp = Number(tekihp.textContent);
 let mycurrenthp = Number(myhp.textContent);
 
 
-// function setTurn(isMyTurn) {
-//     const myButtons = document.querySelectorAll("#my-hand button");
-//     const tekiButtons = document.querySelectorAll("#teki-hand button");
-
-//     myButtons.forEach(btn => btn.disabled = !isMyTurn);
-//     tekiButtons.forEach(btn => btn.disabled = !isMyTurn);
-// }
-
 function endGame() {
     const myButtons = document.querySelectorAll("#my-hand button");
     const tekiButtons = document.querySelectorAll("#teki-hand button");

@@ -16,27 +16,61 @@
             <div class="buttons2">
                 <button onclick="choosePlayer('player2')" class="selectbutton2">ユーザー2</button>
             </div>
+            <div class="buttons3">
+                <button type="button" id="credit-open" class="credit-open-button">クレジット</button>
+            </div>
             <div id="name-setup" class="name-setup" style="display: none;">
                 <p id="name-setup-label">名前を入力してください</p>
                 <input id="player-name-input" type="text" maxlength="8" autocomplete="off" placeholder="名前">
                 <button type="button" onclick="confirmPlayerName()" class="name-start-button">決定</button>
             </div>
         </div>
+        <div id="credit-popup" class="credit-popup" aria-hidden="true">
+            <section class="credit-panel" role="dialog" aria-modal="true" aria-labelledby="credit-title">
+                <header class="credit-top-bar">
+                    <span aria-hidden="true"></span>
+                    <h2 id="credit-title">クレジット</h2>
+                    <button type="button" id="credit-close" class="credit-close-button" aria-label="クレジットを閉じる">閉じる</button>
+                </header>
+                <div class="credit-content">
+                    <h3>NOT FIELD</h3>
+                    <dl class="credit-list">
+                        <div><dt>企画・制作</dt><dd>けんた<br>そら<br>ひろと</dd></div>
+                        <div><dt>ゲームデザイン</dt><dd>ひろと</dd></div>
+                        <div><dt>プログラム</dt><dd>けんた<br>そら</dd></div>
+                        <div><dt>画像・音源素材</dt><dd><a href="https://soundeffect-lab.info/" target="_blank" rel="noopener noreferrer">効果音ラボ</a></dd></div>
+                    </dl>
+                </div>
+                <footer class="credit-bottom-bar">　　</footer>
+            </section>
+        </div>
         <div class="gameoya" style="display: none;">
             <div id="game-screen" style="display: none;">
                 <div class="game-top-bar">
                     <button type="button" class="top-menu-button training-button"><span class="top-menu-icon">&larr;</span><span>&#20462;&#34892;</span></button>
-                    <div id="round-label" class="round-label">G.F.1</div>
+                    <div id="round-label" class="round-label">ラウンド:1</div>
                     <button type="button" class="top-menu-button book-button"><span class="book-icon" aria-hidden="true"></span><span>カード紹介</span></button>
                 </div>
                 <div id="victory-screen" class="victory-screen" style="display: none;">
                     <div class="victory-panel">
                         <div class="victory-kicker">RESULT</div>
                         <h2 id="victory-title">player1 WIN</h2>
-                        <p id="victory-message">勝利しました!</p>
+                        <p id="victory-message">勝利しました</p>
                         <button type="button" onclick="resetGame()" class="victory-reset-button">もう一度遊ぶ</button>
                     </div>
                 </div>
+                <div id="tutorial-overlay" class="tutorial-overlay" aria-hidden="true">
+                    <div id="tutorial-spotlight" class="tutorial-spotlight" aria-hidden="true"></div>
+                </div>
+                <section id="tutorial-panel" class="tutorial-panel" aria-hidden="true" aria-live="polite">
+                    <div id="tutorial-step-label" class="tutorial-step-label">1 / 4</div>
+                    <h2 id="tutorial-title">カードを選ぶ</h2>
+                    <p id="tutorial-message">手札から使いたいカードを1枚押します。</p>
+                    <div class="tutorial-actions">
+                        <button type="button" id="tutorial-ok" class="tutorial-next-button">OK</button>
+                        <button type="button" id="tutorial-skip" class="tutorial-skip-button">すべてスキップ</button>
+                    </div>
+                </section>
                 <div id="card-book-popup" class="card-book-popup" aria-hidden="true">
                     <div class="card-book-panel" role="dialog" aria-modal="true" aria-label="カード紹介">
                         <div class="card-book-top-bar">
@@ -86,8 +120,8 @@
                         <div id="battle-log-player2" class="battle-log"></div>
                     </div>
                     <div class="hparea">
-                        <div class="status status1"><p id="player1-status-name" style="margin-right: 20px;">player1</p><span style="color: #008f6f; font-size: 16px;">HP</span> <span id="myhp" style="color: #4f4f4f; font-size: 17px;">50</span></div>
-                        <div class="status status2"><p id="player2-status-name" style="margin-right: 20px;">player2</p><span style="color: #008f6f; font-size: 16px;">HP</span> <span id="tekihp" style="color: #4f4f4f; font-size: 17px;">50</span></div>
+                        <div class="status status1"><p id="player1-status-name">player1</p><span class="status-resource"><span class="status-resource-label">HP</span><span id="myhp">50</span></span><span class="status-resource"><span class="status-resource-label">MP</span><span id="player1-mp">20</span></span></div>
+                        <div class="status status2"><p id="player2-status-name">player2</p><span class="status-resource"><span class="status-resource-label">HP</span><span id="tekihp">50</span></span><span class="status-resource"><span class="status-resource-label">MP</span><span id="player2-mp">20</span></span></div>
                     </div>
                 </div>
                 <div id="timer-bar-wrap">
@@ -95,9 +129,11 @@
                 </div>
                 <div id="my-screen" class="screen-area">
                     <div id="my-hand" class="hand-area"></div>
+                    <div id="my-magic-hand" class="magic-hand-area"></div>
                 </div>
                 <div id="enemy-screen" class="screen-area">
                     <div id="teki-hand" class="hand-area"></div>
+                    <div id="teki-magic-hand" class="magic-hand-area"></div>
                 </div>
                 <div class="game-bottom-bar">
                     <div id="bottom-player-name" class="bottom-player-name">player1</div>

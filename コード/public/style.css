@@ -77,19 +77,18 @@ textarea {
 }
 
 .setup {
-    border-width: 30px 0px 30px 0px;
     position: absolute;
-    top: 50%;
+    top: 0;
     background-image: url(images/background/homebackground.png);
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 1000px;
+    left: 0;
+    transform: none;
+    width: 100%;
     background-size: cover;
-    height: 602px;
+    height: 100%;
+    box-sizing: border-box;
     background-position: center;
     background-attachment: fixed;
-    border-style: solid;
-    border-color: #008f6f;
+    border: 0;
 }
 
 .setup button {
@@ -121,6 +120,155 @@ textarea {
     color: #349e34;
     border-radius: 20px;
     cursor: pointer;
+}
+
+.buttons3 {
+    display: flex;
+    justify-content: center;
+}
+
+.setup .credit-open-button {
+    width: 75%;
+    margin-top: 20px;
+    padding: 40px 0;
+    border-color: #008f6f;
+    border-radius: 20px;
+    background: rgba(238, 255, 248, 0.94);
+    color: #008f6f;
+    font-size: 50px;
+    cursor: pointer;
+}
+
+.credit-popup {
+    position: absolute;
+    inset: -30px 0;
+    z-index: 120;
+    display: none;
+    box-sizing: border-box;
+}
+
+.credit-popup.is-open {
+    display: block;
+}
+
+.credit-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 0;
+    border-right: 4px solid #008f6f;
+    border-left: 4px solid #008f6f;
+    background: url(images/background/background.png) center / cover;
+    color: #173d2f;
+}
+
+.credit-top-bar,
+.credit-bottom-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    height: 30px;
+    box-sizing: border-box;
+    background: #008f6f;
+    color: #ffffff;
+}
+
+.credit-top-bar {
+    top: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 2px 10px;
+}
+
+.credit-top-bar h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 26px;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    border-radius: 6px;
+    background: #e9fff2;
+    color: #e25a4f;
+    font-size: 20px;
+    line-height: 26px;
+}
+
+.credit-close-button {
+    justify-self: end;
+    width: 150px;
+    min-width: 150px;
+    height: 26px;
+    border: 0;
+    border-radius: 6px;
+    background: #e9fff2;
+    color: #008f6f;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.credit-content {
+    width: min(680px, calc(100% - 40px));
+    margin: 0 auto;
+    padding-top: 110px;
+    text-align: center;
+}
+
+.credit-content h3 {
+    margin-bottom: 30px;
+    color: #00718f;
+    font-size: 42px;
+}
+
+.credit-list {
+    border-top: 3px solid #008f6f;
+}
+
+.credit-list > div {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    min-height: 58px;
+    border-bottom: 2px solid rgba(0, 143, 111, 0.55);
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.credit-list dt,
+.credit-list dd {
+    display: flex;
+    align-items: center;
+    padding: 8px 18px;
+    font-size: 20px;
+}
+
+.credit-list dt {
+    justify-content: flex-end;
+    color: #008f6f;
+    font-weight: 800;
+}
+
+.credit-list dd {
+    border-left: 2px solid rgba(0, 143, 111, 0.45);
+}
+
+.credit-thanks {
+    margin-top: 38px;
+    color: #00718f;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.credit-bottom-bar {
+    bottom: 0;
+    padding-left: 28px;
+    font-size: 18px;
+    line-height: 30px;
 }
 
 .name-setup {
@@ -180,7 +328,7 @@ textarea {
 }
 
 
-.attack, .heal, .defense {
+.attack, .heal, .defense, .magic, .magic-card {
     width: 80px;
     height: auto; /* 変更：文字が入るようにautoにする */
     background: none;
@@ -191,19 +339,122 @@ textarea {
     align-items: center; /* 左右の中央揃え */
 }
 
+.magic img,
+.magic-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.magic-hand-area {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    width: 647px;
+    min-height: 104px;
+    margin: 8px 0 0 14px;
+}
+
+.magic-card {
+    position: relative;
+}
+
+.magic-mp-cost {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    z-index: 3;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: rgba(0, 60, 48, 0.88);
+    color: #efb1ff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.magic.magic-selected,
+.magic-card.magic-selected {
+    outline: 3px solid #00a37a;
+    outline-offset: 3px;
+    transform: translateY(-5px);
+    filter: drop-shadow(0 7px 9px rgba(0, 80, 60, 0.35));
+}
+
 .card-value {
+    width: 100%;
+    height: 24px;
     font-size: 16px;
     font-weight: bold;
     background-color: rgb(221 255 204);
-    padding: 2px 10px;
-    margin-top: -5px;
+    padding: 2px 4px;
+    margin-top: 0;
     border-radius: 0px 0px 8px 8px;
-    margin-left: 3px;
+    margin-left: 0;
+    box-sizing: border-box;
+    line-height: 20px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.card-value.hit-rate-card-value {
+    font-size: 14px;
 }
 
 .hand-card.feed-in {
     opacity: 0;
     animation: hand-card-feed-in 0.35s ease-out forwards;
+}
+
+.hand-card.initial-deal-reveal {
+    --initial-card-size: 80px;
+    overflow: hidden;
+}
+
+.hand-card.initial-deal-reveal::before,
+.hand-card.initial-deal-reveal::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    z-index: 6;
+    width: 100%;
+    height: calc(var(--initial-card-size) / 2);
+    box-sizing: border-box;
+    border: 1px solid rgba(233, 255, 242, 0.75);
+    background: #008f6f;
+    pointer-events: none;
+}
+
+.hand-card.initial-deal-reveal::before {
+    top: 0;
+    transform-origin: center top;
+    animation: initial-card-open-top 0.18s ease-out var(--initial-deal-delay, 0ms) both;
+}
+
+.hand-card.initial-deal-reveal::after {
+    top: calc(var(--initial-card-size) / 2);
+    transform-origin: center bottom;
+    animation: initial-card-open-bottom 0.18s ease-out var(--initial-deal-delay, 0ms) both;
+}
+
+.hand-card.initial-deal-reveal .card-value {
+    opacity: 0;
+    animation: initial-card-value-show 0.08s ease-out calc(var(--initial-deal-delay, 0ms) + 180ms) forwards;
+}
+
+@keyframes initial-card-open-top {
+    from { transform: scaleY(1); }
+    to { transform: scaleY(0); }
+}
+
+@keyframes initial-card-open-bottom {
+    from { transform: scaleY(1); }
+    to { transform: scaleY(0); }
+}
+
+@keyframes initial-card-value-show {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .hand-card,
@@ -216,6 +467,16 @@ textarea {
 .hand-card:not(:disabled) .card-value {
     color: #000000;
     -webkit-text-fill-color: #000000;
+}
+
+.hand-card .card-value.fire-card-value {
+    color: #d63832;
+    -webkit-text-fill-color: #d63832;
+}
+
+.hand-card .card-value.mp-card-value {
+    color: #b13bd0;
+    -webkit-text-fill-color: #b13bd0;
 }
 
 .hand-card {
@@ -243,6 +504,107 @@ textarea {
     background-color: #00a37a;
     color: #fff;
     -webkit-text-fill-color: #fff;
+}
+
+.hand-card.defense-glow-group::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: -4px;
+    z-index: 4;
+    width: calc(var(--defense-glow-width, 100%) + 8px);
+    box-sizing: border-box;
+    border: 3px solid rgba(255, 255, 255, 0.95);
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 12px rgba(0, 163, 122, 0.75);
+    pointer-events: none;
+    animation: defense-card-border-pulse 1.15s ease-in-out infinite;
+}
+
+.hand-card.defense-turn-available.defense-selected {
+    transform: none;
+}
+
+.hand-card.tutorial-defense-bright {
+    z-index: 72;
+    opacity: 1;
+    filter: none;
+}
+
+.hand-card.tutorial-defense-bright img,
+.hand-card.tutorial-defense-bright .card-value {
+    opacity: 1;
+    filter: none;
+}
+
+@keyframes defense-card-border-pulse {
+    0%,
+    100% {
+        border-color: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.65), 0 0 8px rgba(0, 163, 122, 0.58);
+    }
+    50% {
+        border-color: #ffffff;
+        box-shadow: 0 0 10px #ffffff, 0 0 16px rgba(0, 163, 122, 0.92);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hand-card.defense-glow-group::after {
+        animation: none;
+    }
+}
+
+.tutorial-overlay.defense-group-mode .tutorial-spotlight {
+    border-color: transparent;
+    box-shadow: 0 0 0 9999px rgba(0, 54, 43, 0.72);
+}
+
+.tutorial-overlay.defense-confirm-mode .tutorial-spotlight {
+    border-color: transparent;
+    box-shadow: 0 0 0 9999px rgba(0, 54, 43, 0.72);
+}
+
+.tutorial-overlay.defense-confirm-mode ~ .select .defense-card-display {
+    position: relative;
+    z-index: 72;
+    opacity: 1;
+    filter: none;
+}
+
+.tutorial-overlay.defense-confirm-mode ~ .select .defense-card-display .card-info-panel {
+    border-color: #ffffff;
+    box-shadow: 0 0 9px rgba(255, 255, 255, 0.9);
+}
+
+.tutorial-overlay.defense-confirm-mode ~ .select .defense-confirm-display {
+    z-index: 72;
+    opacity: 1;
+    filter: none;
+    box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.98),
+        0 0 0 6px rgba(65, 112, 150, 0.82),
+        0 0 14px rgba(255, 255, 255, 0.9);
+}
+
+.tutorial-overlay.defense-group-mode ~ .screen-area,
+.tutorial-overlay.defense-confirm-mode ~ .screen-area {
+    z-index: 71;
+}
+
+.tutorial-overlay.defense-group-mode ~ .screen-area .hand-card,
+.tutorial-overlay.defense-confirm-mode ~ .screen-area .hand-card {
+    opacity: 0.42;
+    filter: brightness(0.55);
+}
+
+.tutorial-overlay.defense-group-mode ~ .screen-area .hand-card.tutorial-defense-bright,
+.tutorial-overlay.defense-confirm-mode ~ .screen-area .hand-card.tutorial-defense-bright {
+    opacity: 1;
+    filter: none;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0 0 3px #ffffff, 0 0 12px rgba(255, 255, 255, 0.95);
 }
 
 .hand-card.shatter-out {
@@ -282,6 +644,19 @@ textarea {
 
 .damage-result-display {
     animation: result-panel-fade-in 0.32s ease-out both;
+}
+
+.destroyed-card-display {
+    animation: result-panel-fade-in 0.28s ease-out both;
+}
+
+.destroyed-card-heading {
+    margin: 8px 0 4px;
+    color: #b00000;
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+    text-shadow: 0 1px 0 #ffffff;
 }
 
 .result-panel {
@@ -388,7 +763,7 @@ textarea {
 .card-book-popup {
     position: absolute;
     inset: -30px 0;
-    z-index: 45;
+    z-index: 100;
     display: none;
     box-sizing: border-box;
     background: rgba(0, 70, 54, 0.5);
@@ -560,21 +935,24 @@ textarea {
     position: absolute;
     left: 50%;
     bottom: calc(100% + 12px);
-    display: grid;
-    grid-template-rows: auto 1fr auto auto;
-    gap: 8px;
-    width: 176px;
-    min-height: 242px;
-    padding: 10px;
-    border: 3px solid #493827;
-    border-radius: 7px;
-    background: #f9f0ce;
+    display: block;
+    width: 300px;
+    height: 90px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: #211a13;
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 8px) scale(0.96);
     transform-origin: bottom center;
     transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.card-book-preview .card-info-panel {
+    margin: 0;
 }
 
 .card-book-slot:hover .card-book-preview,
@@ -646,6 +1024,14 @@ textarea {
     font-weight: 900;
     line-height: 1.15;
     text-align: center;
+}
+
+.card-book-preview-name.fire-attribute-name {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #d63832;
 }
 
 .card-book-preview-text {
@@ -732,7 +1118,7 @@ textarea {
     .card-book-popup {
         position: fixed;
         inset: 0;
-        z-index: 60;
+        z-index: 100;
     }
 
     .card-book-panel {
@@ -799,8 +1185,9 @@ textarea {
     }
 
     .card-book-preview {
-        width: 164px;
-        min-height: 230px;
+        width: 166px;
+        height: 51px;
+        min-height: 0;
     }
 }
 
@@ -834,6 +1221,124 @@ textarea {
 .turn-notice.is-visible {
     opacity: 1;
     transform: scale(1);
+}
+
+.turn-notice.is-countdown {
+    z-index: 72;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(0, 80, 60, 0.5);
+}
+
+.match-countdown-message {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.match-countdown-number {
+    font-size: 112px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.tutorial-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 70;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.tutorial-overlay.is-open {
+    visibility: visible;
+}
+
+.tutorial-spotlight {
+    position: absolute;
+    z-index: 1;
+    box-sizing: border-box;
+    border: 4px solid #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 54, 43, 0.72), 0 0 18px rgba(255, 255, 255, 0.9);
+    transition: left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.tutorial-panel {
+    position: absolute;
+    z-index: 74;
+    visibility: hidden;
+    width: min(340px, calc(100% - 20px));
+    padding: 18px 20px 16px;
+    box-sizing: border-box;
+    border: 3px solid #008f6f;
+    border-radius: 8px;
+    background: #f4fff2;
+    color: #17473b;
+    box-shadow: 0 6px 18px rgba(0, 45, 35, 0.35);
+    pointer-events: none;
+}
+
+.tutorial-overlay.is-open + .tutorial-panel {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.tutorial-step-label {
+    color: #e25a4f;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.tutorial-panel h2 {
+    margin: 3px 0 8px;
+    color: #008f6f;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.tutorial-panel p {
+    min-height: 48px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.tutorial-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.tutorial-actions button {
+    min-width: 104px;
+    min-height: 40px;
+    padding: 6px 16px;
+    border: 2px solid #008f6f;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.tutorial-skip-button {
+    background: #ffffff;
+    color: #5e6f6a;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.tutorial-skip-button.is-confirm:hover,
+.tutorial-skip-button.is-confirm:focus-visible {
+    background: #008f6f;
+    color: #ffffff;
+}
+
+.tutorial-next-button {
+    background: #008f6f;
+    color: #ffffff;
 }
 
 .turn-notice.is-visible.is-waiting {
@@ -902,11 +1407,57 @@ textarea {
     padding: 0 8px;
 }
 
+.select.attacker-player2 > .player2 {
+    order: 1;
+}
+
+.select.attacker-player2 > .attack-arrow {
+    order: 2;
+}
+
+.select.attacker-player2 > .player1 {
+    order: 3;
+}
+
+.select.attacker-player2 > .hparea {
+    order: 4;
+}
+
+.select > .player1,
+.select > .player2,
+.select > .attack-arrow {
+    transition: opacity 0.15s ease;
+}
+
+.select.switching-attacker-order > .player1,
+.select.switching-attacker-order > .player2,
+.select.switching-attacker-order > .attack-arrow {
+    opacity: 0;
+}
+
 .hand-area {
     display: flex;
     margin-left: 14px;
     gap: 1px;
     margin-top: 5px;
+}
+
+.waiting-hand-placeholder {
+    position: relative;
+    flex: 0 0 80px;
+    width: 80px;
+    height: 101px;
+}
+
+.waiting-hand-placeholder::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 80px;
+    height: 80px;
+    box-sizing: border-box;
+    border: 2px solid rgba(233, 255, 242, 0.7);
+    background: #008f6f;
 }
 
 .card-info-panel {
@@ -950,6 +1501,10 @@ textarea {
     min-width: 0;
 }
 
+.card-info-panel.has-description .card-info-body {
+    grid-template-rows: 1fr 1fr 1fr;
+}
+
 .card-info-name {
     display: flex;
     align-items: center;
@@ -973,6 +1528,22 @@ textarea {
     box-sizing: border-box;
 }
 
+.card-info-description {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0 8px;
+    overflow: hidden;
+    background: #efffe2;
+    color: #315244;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
 
 
 .card-info-name {
@@ -982,6 +1553,26 @@ textarea {
     color: #173d2f;
     font-size: 18px;
     font-weight: 700;
+}
+
+.card-info-name-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-info-name.fire-attribute-name {
+    gap: 4px;
+    color: #d63832;
+    -webkit-text-fill-color: #d63832;
+}
+
+.card-info-name .card-attribute-icon,
+.card-book-preview-name .card-attribute-icon {
+    flex: 0 0 1em;
+    width: 1em !important;
+    height: 1em !important;
+    object-fit: contain;
 }
 
 .card-info-effect {
@@ -1043,6 +1634,35 @@ textarea {
     font-size: 28px;
     font-weight: 800;
     line-height: 30px;
+    cursor: pointer;
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.95),
+        0 0 0 5px rgba(65, 112, 150, 0.72),
+        0 0 10px rgba(255, 255, 255, 0.7);
+    animation: action-confirm-pulse 1.25s ease-in-out infinite;
+}
+
+@keyframes action-confirm-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 3px rgba(255, 255, 255, 0.9),
+            0 0 0 5px rgba(65, 112, 150, 0.62),
+            0 0 8px rgba(255, 255, 255, 0.55);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(255, 255, 255, 1),
+            0 0 0 6px rgba(65, 112, 150, 0.82),
+            0 0 15px rgba(255, 255, 255, 0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .attack-total-display,
+    .defense-confirm-display {
+        animation: none;
+    }
 }
 
 .attack-total-display,
@@ -1157,6 +1777,8 @@ textarea {
     font-size: 26px;
     color: #008f6f;
     display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -1174,11 +1796,28 @@ textarea {
 }
 
 .status p {
+    flex: 1 1 auto;
+    min-width: 0;
     max-width: 118px;
-    margin-right: 8px !important;
+    margin: 0 4px 0 0 !important;
     white-space: nowrap;
     overflow: hidden;
     font-size: 26px;
+}
+
+.status-resource {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: baseline;
+    gap: 2px;
+    color: #4f4f4f;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.status-resource-label {
+    color: #008f6f;
+    font-size: 14px;
 }
 
 @keyframes victory-screen-in {
@@ -1303,7 +1942,10 @@ textarea {
 
 .screen {
     width: 1000px;
-    background-image: url(images/background/background.png);
+    height: 812px;
+    box-sizing: border-box;
+    /* background-image: url(images/background/background.png); */
+    background-image: url(images/background/honkebackground.webp);
     background-size: cover;
     background-position: center;
     position: absolute;
@@ -1525,6 +2167,10 @@ textarea {
 .screen-area {
     position: relative;
     top: -34px;
+}
+
+.screen-area.hand-screen-hidden {
+    display: none;
 }
 
 @media screen and (max-width: 1004px) {
@@ -1753,16 +2399,33 @@ textarea {
 
     .attack,
     .heal,
-    .defense {
+    .defense,
+    .magic,
+    .magic-card {
         width: 52px;
         height: auto;
     }
 
     .attack img,
     .heal img,
-    .defense img {
+    .defense img,
+    .magic img,
+    .magic-card img {
         width: 52px;
         height: 52px;
+    }
+
+    .magic-hand-area {
+        width: auto;
+        min-height: 70px;
+        margin: 6px 0 0;
+    }
+
+    .magic-mp-cost {
+        top: 2px;
+        right: 2px;
+        padding: 1px 2px;
+        font-size: 9px;
     }
 
     .card-value {
@@ -2002,6 +2665,14 @@ textarea {
         grid-row: 2;
     }
 
+    .select.attacker-player2 .player2 {
+        grid-column: 1;
+    }
+
+    .select.attacker-player2 .player1 {
+        grid-column: 2;
+    }
+
     .player1 h3,
     .player2 h3 {
         height: 23px;
@@ -2134,6 +2805,21 @@ textarea {
         width: 52px;
     }
 
+    .waiting-hand-placeholder {
+        flex-basis: 52px;
+        width: 52px;
+        height: 70px;
+    }
+
+    .waiting-hand-placeholder::before {
+        width: 52px;
+        height: 52px;
+    }
+
+    .hand-card.initial-deal-reveal {
+        --initial-card-size: 52px;
+    }
+
     .attack img,
     .heal img,
     .defense img {
@@ -2142,14 +2828,22 @@ textarea {
     }
 
     .card-value {
+        width: 100%;
+        height: 20px;
         min-width: 50px;
-        margin-top: -4px;
+        margin-top: 0;
         margin-left: 0;
         padding: 1px 4px;
         border-radius: 0 0 4px 4px;
         font-size: 16px;
         line-height: 18px;
         text-align: center;
+    }
+
+    .card-value.hit-rate-card-value {
+        padding-right: 1px;
+        padding-left: 1px;
+        font-size: 12px;
     }
 
     .hparea {
@@ -2213,6 +2907,41 @@ textarea {
         box-sizing: border-box;
     }
 
+    .match-countdown-message {
+        max-width: 92vw;
+        font-size: 24px;
+    }
+
+    .match-countdown-number {
+        font-size: 88px;
+    }
+
+    .tutorial-overlay {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        z-index: 100;
+    }
+
+    .tutorial-panel {
+        width: min(330px, calc(100% - 20px));
+        padding: 14px 16px;
+    }
+
+    .tutorial-panel h2 {
+        font-size: 21px;
+    }
+
+    .tutorial-panel p {
+        min-height: 42px;
+        font-size: 14px;
+    }
+
+    .tutorial-actions {
+        margin-top: 10px;
+    }
+
     .status.attack-target-selected {
         transform: none;
     }
@@ -2233,6 +2962,14 @@ textarea {
     .status span {
         font-size: 14px !important;
         line-height: 1;
+    }
+
+    .status-resource {
+        gap: 2px;
+    }
+
+    .status-resource-label {
+        font-size: 12px !important;
     }
 
     .status span[id] {
@@ -2288,5 +3025,59 @@ textarea {
 
     .card-book-popup .card-book-bottom-player-name {
         font-size: 17px;
+    }
+
+    .setup .credit-open-button {
+        width: 92%;
+        margin-top: 20px;
+        padding: 24px 0;
+        border-radius: 14px;
+        font-size: 30px;
+    }
+
+    .credit-popup {
+        position: fixed;
+        inset: 0;
+    }
+
+    .credit-panel {
+        border-right-width: 4px;
+        border-left-width: 4px;
+    }
+
+    .credit-top-bar h2 {
+        width: 100px;
+        font-size: 16px;
+    }
+
+    .credit-close-button {
+        width: 100px;
+        min-width: 100px;
+        font-size: 14px;
+    }
+
+    .credit-content {
+        width: calc(100% - 24px);
+        padding-top: 74px;
+    }
+
+    .credit-content h3 {
+        margin-bottom: 18px;
+        font-size: 30px;
+    }
+
+    .credit-list > div {
+        min-height: 48px;
+    }
+
+    .credit-list dt,
+    .credit-list dd {
+        padding: 6px 10px;
+        font-size: 15px;
+    }
+
+    .credit-thanks {
+        margin-top: 24px;
+        font-size: 16px;
     }
 }

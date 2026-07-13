@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+//firebase config
+
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
@@ -147,8 +149,6 @@ let selectedCardIndex = null;
 let selectedBoostCardIndexes = [];
 let selectedHandMagicCardIndexes = [];
 let displayedAttackerRole = null;
-let pendingAttackerRole = null;
-let attackerOrderSwitchTimer = null;
 let heldAttackDisplayAfterResult = null;
 let attackDisplayAfterResultTimer = null;
 let pendingAttackGlobal = 0;
@@ -184,6 +184,7 @@ const PUNCH_SOUND_SRC = "se/punch.wav";
 const REFLECT_SOUND_SRC = "se/hansya.wav";
 const RESULT_DISPLAY_MS = 1800;
 const CARD_ACTION_DISPLAY_MS = 2100;
+const CONTROLLED_CARD_ACTION_DISPLAY_MS = 3600;
 const ATTACK_DISPLAY_AFTER_RESULT_DELAY_MS = 300;
 const CARD_DRAW_SOUND_GAP_MS = 200;
 const HAND_CARD_FEED_IN_GAP_MS = 200;
@@ -247,6 +248,7 @@ const tutorialTitle = document.getElementById("tutorial-title");
 const tutorialMessage = document.getElementById("tutorial-message");
 const tutorialOkButton = document.getElementById("tutorial-ok");
 const tutorialSkipButton = document.getElementById("tutorial-skip");
+const tutorialTimebarFill = document.getElementById("tutorial-timebar-fill");
 
 const DEFAULT_PLAYER_NAMES = {
     player1: "player1",
@@ -265,6 +267,7 @@ const BOOST_TUTORIAL_KEY = "notfield_boost_tutorial_completed_v2";
 const DEFENSE_TUTORIAL_KEY = "notfield_defense_tutorial_completed_v2";
 const RANDOM_TUTORIAL_KEY = "notfield_random_tutorial_completed_v1";
 const SELF_ATTACK_TUTORIAL_KEY = "notfield_control_self_attack_tutorial_completed_v1";
+const TUTORIAL_AUTO_CLOSE_MS = 7000;
 const TUTORIAL_STORAGE_KEYS = [
     ATTACK_TUTORIAL_KEY,
     BOOST_TUTORIAL_KEY,
@@ -277,6 +280,7 @@ let tutorialMode = null;
 let tutorialAttackFlowActive = false;
 let tutorialBoostWasShown = false;
 let tutorialStartTimer = null;
+let tutorialAutoCloseTimer = null;
 let tutorialScheduledMode = null;
 let matchStartCountdownActive = false;
 let matchStartCountdownTimers = [];
@@ -419,7 +423,7 @@ function getTutorialContent() {
     if (tutorialMode === "random-control") {
         return {
             label: "ランダムガイド",
-            title: "コントローラーで操作されています",
+            title: "ハッキングで操作されています",
             message: "これから手札がランダムに選ばれます。攻撃・守備・回復のどれが出るか、対象も含めて自動で決まります。",
             target: playerElement?.querySelector("h3") || playerElement
         };
@@ -428,11 +432,12 @@ function getTutorialContent() {
         return {
             label: "ランダム攻撃ガイド",
             title: "自分に攻撃が向きました",
-            message: "コントローラーのランダム効果で、自分自身が攻撃対象になりました。守備カードを選ぶか、そのまま攻撃を受けてください。",
+            message: "ハッキングのランダム効果で、自分自身が攻撃対象になりました。守備カードを選ぶか、そのまま攻撃を受けてください。",
             target: playerElement?.querySelector(".attack-total-display, .attack-card-display") || playerElement
         };
     }
     const selectedDefenseCount = (selectedDefenseCards[myPlayerRole] || []).length;
+    const selectedDefenseList = playerElement?.querySelector(".defense-card-list");
     return {
         label: "守備ガイド",
         title: "守備を確定しよう",
@@ -440,8 +445,9 @@ function getTutorialContent() {
             ? "さらに守備カードを追加することもできます。準備ができたら「守」を押してください。"
             : "守備を使わない場合は「許す」を押すと、受けるダメージが確定します。",
         target: selectedDefenseCount > 0
-            ? (getLastDefenseCardDisplay(playerElement) || playerElement)
-            : (playerElement?.querySelector(".defense-confirm-display") || playerElement)
+            ? (selectedDefenseList || getLastDefenseCardDisplay(playerElement) || playerElement)
+            : (playerElement?.querySelector(".defense-confirm-display") || playerElement),
+        targets: null
     };
 }
 
@@ -451,7 +457,17 @@ function positionTutorial() {
     const content = getTutorialContent();
     const target = content.target || gameScreenDiv;
     const screenRect = gameScreenDiv.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
+    const targetRects = Array.isArray(content.targets) && content.targets.length > 0
+        ? content.targets.map(element => element.getBoundingClientRect())
+        : [target.getBoundingClientRect()];
+    const targetRect = targetRects.reduce((bounds, rect) => ({
+        left: Math.min(bounds.left, rect.left),
+        top: Math.min(bounds.top, rect.top),
+        right: Math.max(bounds.right, rect.right),
+        bottom: Math.max(bounds.bottom, rect.bottom),
+        width: Math.max(bounds.right, rect.right) - Math.min(bounds.left, rect.left),
+        height: Math.max(bounds.bottom, rect.bottom) - Math.min(bounds.top, rect.top)
+    }));
     const padding = 6;
     const left = Math.max(4, targetRect.left - screenRect.left - padding);
     const top = Math.max(4, targetRect.top - screenRect.top - padding);
@@ -500,12 +516,36 @@ function renderTutorialStep() {
     tutorialSkipButton.classList.remove("is-confirm");
     tutorialOverlay?.classList.toggle("defense-group-mode", tutorialMode === "defense-select");
     tutorialOverlay?.classList.toggle("defense-confirm-mode", tutorialMode === "defense-confirm");
+    startTutorialAutoCloseTimer();
     requestAnimationFrame(positionTutorial);
+}
+
+function clearTutorialAutoCloseTimer() {
+    clearTimeout(tutorialAutoCloseTimer);
+    tutorialAutoCloseTimer = null;
+    tutorialTimebarFill?.classList.remove("is-running");
+}
+
+function startTutorialAutoCloseTimer() {
+    clearTutorialAutoCloseTimer();
+    if (!isTutorialActive) return;
+
+    if (tutorialTimebarFill) {
+        tutorialTimebarFill.style.setProperty("--tutorial-duration", `${TUTORIAL_AUTO_CLOSE_MS}ms`);
+        void tutorialTimebarFill.offsetWidth;
+        tutorialTimebarFill.classList.add("is-running");
+    }
+
+    tutorialAutoCloseTimer = setTimeout(() => {
+        tutorialAutoCloseTimer = null;
+        closeTutorial(true);
+    }, TUTORIAL_AUTO_CLOSE_MS);
 }
 
 function closeTutorial(completed = false) {
     clearTimeout(tutorialStartTimer);
     tutorialStartTimer = null;
+    clearTutorialAutoCloseTimer();
     if (!isTutorialActive && !tutorialOverlay?.classList.contains("is-open")) return;
 
     const wasRandomTutorial = tutorialMode === "random-control";
@@ -531,12 +571,16 @@ function closeTutorial(completed = false) {
     lastTimerStateKey = null;
     resetTimerWhenTurnStateChanges(currentTurnGlobal, pendingAttackGlobal);
     queueMicrotask(renderHands);
-    if (wasRandomTutorial && completed) queueMicrotask(maybeRunControlledRound);
+    const shouldResumeControlledAction = controlEffectGlobal?.target === myPlayerRole
+        && isMyTurnGlobal
+        && pendingAttackGlobal === 0;
+    if (shouldResumeControlledAction) queueMicrotask(maybeRunControlledRound);
 }
 
 function startTutorial(mode = tutorialScheduledMode) {
     tutorialStartTimer = null;
     tutorialScheduledMode = null;
+    if (cardBookPopup?.classList.contains("is-open")) return;
     const isAttackGuide = mode === "attack-select";
     const isDefenseGuide = mode === "defense-select";
     const isRandomGuide = mode === "random-control";
@@ -568,7 +612,15 @@ function startTutorial(mode = tutorialScheduledMode) {
 }
 
 function maybeStartTutorial() {
-    if (matchStartCountdownActive || isTutorialActive || tutorialStartTimer || !gameStartedGlobal || !myPlayerRole || !isMyTurnGlobal) return;
+    if (
+        matchStartCountdownActive ||
+        isTutorialActive ||
+        tutorialStartTimer ||
+        cardBookPopup?.classList.contains("is-open") ||
+        !gameStartedGlobal ||
+        !myPlayerRole ||
+        !isMyTurnGlobal
+    ) return;
     const controlledSelfAttack = isControlledSelfAttackPending();
     if (controlEffectGlobal?.target === myPlayerRole && !controlledSelfAttack) return;
 
@@ -784,10 +836,33 @@ function playCardDrawSoundSequence(count) {
 }
 let pendingNameRole = null;
 
-function clearCardActionDisplays() {
-    [player1Div, player2Div].forEach(div => {
-        div?.querySelectorAll(".selected-card-info, .selected-card-info-remote, .attack-card-display, .attack-total-display, .defense-card-display").forEach(el => el.remove());
+const CARD_ACTION_DISPLAY_SELECTOR = [
+    ".selected-card-info",
+    ".selected-card-info-remote",
+    ".attack-card-display",
+    ".attack-total-display",
+    ".defense-card-list",
+    ".defense-card-display"
+].join(", ");
+
+function getPlayerDisplayDivs() {
+    return [player1Div, player2Div].filter(Boolean);
+}
+
+function clearSelectedCardState() {
+    selectedCardIndex = null;
+    selectedBoostCardIndexes = [];
+    selectedHandMagicCardIndexes = [];
+}
+
+function clearDisplayElements(selector, divs = getPlayerDisplayDivs()) {
+    divs.forEach(div => {
+        div.querySelectorAll(selector).forEach(el => el.remove());
     });
+}
+
+function clearCardActionDisplays() {
+    clearDisplayElements(CARD_ACTION_DISPLAY_SELECTOR);
 }
 
 function getWinnerFromHp(player1Hp, player2Hp) {
@@ -1077,137 +1152,6 @@ function getRandomPlayerRole() {
     return Math.random() < 0.5 ? "player1" : "player2";
 }
 
-function makeControlRoundResultFallback(actorRole) {
-    return {
-        id: Date.now(),
-        player: actorRole,
-        damage: 0,
-        message: "操作"
-    };
-}
-
-function executeControlledRandomRound() {
-    if (!controlEffectGlobal || controlEffectGlobal.target !== myPlayerRole || !isMyTurnGlobal || pendingAttackGlobal > 0) {
-        controlledActionInProgress = false;
-        return;
-    }
-
-    const actorRole = myPlayerRole;
-    const actorHand = getHandByRole(actorRole);
-    const nextTurn = getOpponentRole(actorRole);
-    let actionResult = null;
-    let handEffect = null;
-    let usedCount = 0;
-
-    if (!actorHand || actorHand.length === 0) {
-        sendGameState(nextTurn, 0, null, "", makeControlResultFallback(actorRole), null, null);
-        return;
-    }
-
-    clearCardActionDisplays();
-    selectedCardIndex = null;
-
-    for (let i = 0; i < 3 && actorHand.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * actorHand.length);
-        const randomCardKey = actorHand[randomIndex];
-        const randomCard = CARDS[randomCardKey];
-        actorHand.splice(randomIndex, 1);
-        usedCount++;
-
-        if (!randomCard || randomCardKey === "hacking") {
-            actionResult = makeControlResultFallback(actorRole);
-            continue;
-        }
-
-        if (randomCard.type === "attack") {
-            const targetRole = getRandomPlayerRole();
-            const hit = randomCard.hitRate === undefined || Math.random() < randomCard.hitRate;
-
-            if (!hit) {
-                actionResult = {
-                    id: Date.now() + i,
-                    player: targetRole,
-                    damage: 0,
-                    message: "外れ"
-                };
-                continue;
-            }
-
-            if (randomCardKey === "mojibake") {
-                handEffect = destroyRandomHandCard(targetRole) || handEffect;
-                actionResult = {
-                    id: Date.now() + i,
-                    player: targetRole,
-                    damage: 0,
-                    message: "破壊"
-                };
-                continue;
-            }
-
-            const currentDefense = getRoleDefense(targetRole);
-            const damage = Math.max(0, randomCard.value - currentDefense);
-            setRoleDefense(targetRole, 0);
-            setRoleHp(targetRole, Math.max(0, getRoleHp(targetRole) - damage));
-            actionResult = {
-                id: Date.now() + i,
-                player: targetRole,
-                damage
-            };
-            continue;
-        }
-
-        if (randomCard.type === "heal") {
-            const targetRole = getRandomPlayerRole();
-            const beforeHp = getRoleHp(targetRole);
-            const healedHp = Math.min(99, beforeHp + randomCard.value);
-            setRoleHp(targetRole, healedHp);
-            actionResult = {
-                id: Date.now() + i,
-                player: targetRole,
-                type: "heal",
-                amount: healedHp - beforeHp
-            };
-            continue;
-        }
-
-        if (randomCard.type === "defense") {
-            setRoleDefense(actorRole, randomCard.value);
-            actionResult = {
-                id: Date.now() + i,
-                player: actorRole,
-                damage: 0,
-                message: "守備"
-            };
-        }
-    }
-
-    reserveDrawForRole(actorRole, usedCount);
-
-    if (!actionResult) {
-        actionResult = makeControlResultFallback(actorRole);
-    }
-
-    const nextTurnRole = getRoleHp("player1") <= 0 || getRoleHp("player2") <= 0 ? "end" : nextTurn;
-    sendGameState(nextTurnRole, 0, null, "", actionResult, handEffect, null);
-}
-
-function maybeRunControlledAction() {
-    if (
-        controlledActionInProgress ||
-        !controlEffectGlobal ||
-        controlEffectGlobal.target !== myPlayerRole ||
-        !isMyTurnGlobal ||
-        pendingAttackGlobal > 0
-    ) {
-        return;
-    }
-
-    controlledActionInProgress = true;
-    setTimeout(() => {
-        executeControlledRandomAction();
-    }, 650);
-}
-
 function getControlRemaining() {
     return controlEffectGlobal?.remaining ?? controlEffectGlobal?.actions ?? 0;
 }
@@ -1249,119 +1193,178 @@ function keepUsedCardForTurn(cardInfo, turnRole) {
     return cardInfo;
 }
 
+function makeRandomPendingSelectedCard(player) {
+    return {
+        id: Date.now(),
+        player,
+        label: "ランダム",
+        randomPending: true,
+        keep: true,
+        showOnTurn: player
+    };
+}
+
+function canUseCardByControlledRandom(cardKey, card) {
+    if (!card || cardKey === MAGIC_CARD_KEY || cardKey === "hacking") return false;
+    return card.type === "attack" || card.type === "heal" || card.type === "defense";
+}
+
+function getControlledActionCandidates(role) {
+    return getHandByRole(role)
+        .map((cardKey, handIndex) => ({ cardKey, handIndex, card: CARDS[cardKey] }))
+        .filter(({ cardKey, card }) => canUseCardByControlledRandom(cardKey, card));
+}
+
+function getNextTurnRoleAfterAction(nextTurnRole) {
+    return getRoleHp("player1") <= 0 || getRoleHp("player2") <= 0 ? "end" : nextTurnRole;
+}
+
+function makeMissResult(targetRole) {
+    return {
+        id: Date.now(),
+        player: targetRole,
+        damage: 0,
+        message: "外れ"
+    };
+}
+
+function makeHandDestroyResult(targetRole) {
+    return {
+        id: Date.now(),
+        player: targetRole,
+        damage: 0,
+        message: "破壊"
+    };
+}
+
+function makeSafeResult(targetRole) {
+    return {
+        id: Date.now(),
+        player: targetRole,
+        damage: 0,
+        message: "無事"
+    };
+}
+
+function makeControlledAttackInfo(actorRole, targetRole, card, nextTurnRole) {
+    const attackCardInfo = {
+        name: card.name,
+        imgSrc: card.imgSrc,
+        value: card.value,
+        element: card.element || null,
+        description: card.description,
+        player: actorRole,
+        target: targetRole,
+        hit: true,
+        controlled: true,
+        afterTurn: nextTurnRole
+    };
+    if (card.hitRate !== undefined) attackCardInfo.hitRate = card.hitRate;
+    return attackCardInfo;
+}
+
+function applyControlledHeal(card, targetRole) {
+    const beforeHp = getRoleHp(targetRole);
+    const healedHp = Math.min(99, beforeHp + card.value);
+    setRoleHp(targetRole, healedHp);
+    return {
+        id: Date.now(),
+        player: targetRole,
+        type: "heal",
+        amount: healedHp - beforeHp
+    };
+}
+
 function executeControlledRandomAction() {
     if (!controlEffectGlobal || controlEffectGlobal.target !== myPlayerRole || !isMyTurnGlobal || pendingAttackGlobal > 0) {
         controlledActionInProgress = false;
+        lastControlledActionKey = null;
         return;
     }
 
     const actorRole = myPlayerRole;
-    const actorHand = getHandByRole(actorRole);
     const nextTurn = getOpponentRole(actorRole);
     const remaining = getControlRemaining();
     const nextRemaining = Math.max(0, remaining - 1);
     const nextControlEffect = nextRemaining > 0
         ? { ...controlEffectGlobal, remaining: nextRemaining }
         : null;
-    let actionResult = makeControlRoundResultFallback(actorRole);
+    let actionResult = makeControlResultFallback(actorRole);
     let handEffect = null;
     let usedCardInfo = null;
 
-    controlledActionInProgress = false;
-
-    if (!actorHand || actorHand.length === 0) {
-        const nextTurnRole = getRoleHp("player1") <= 0 || getRoleHp("player2") <= 0 ? "end" : nextTurn;
-        sendGameState(nextTurnRole, 0, null, "", actionResult, null, nextControlEffect, null);
-        return;
-    }
-
     clearCardActionDisplays();
-    selectedCardIndex = null;
+    clearSelectedCardState();
     update(gameRoomRef, {
-        selected_card: {
-            id: Date.now(),
-            player: actorRole,
-            label: "ランダム",
-            randomPending: true,
-            keep: true,
-            showOnTurn: actorRole
-        }
+        selected_card: makeRandomPendingSelectedCard(actorRole)
     });
 
     setTimeout(() => {
-    const randomIndex = Math.floor(Math.random() * actorHand.length);
-    const randomCardKey = actorHand[randomIndex];
-    const randomCard = CARDS[randomCardKey];
-    actorHand.splice(randomIndex, 1);
-    reserveDrawForRole(actorRole, 1);
-    usedCardInfo = makeUsedCardInfo(actorRole, randomCard);
-
-    if (randomCard && randomCardKey !== "hacking" && randomCardKey !== "enadori") {
-        if (randomCard.type === "attack") {
-            const targetRole = getRandomPlayerRole();
-            if (usedCardInfo) usedCardInfo.target = targetRole;
-            const hit = randomCard.hitRate === undefined || Math.random() < randomCard.hitRate;
-
-            if (!hit) {
-                actionResult = {
-                    id: Date.now(),
-                    player: targetRole,
-                    damage: 0,
-                    message: "外れ"
-                };
-            } else if (randomCardKey === "mojibake") {
-                handEffect = destroyRandomHandCard(targetRole);
-                actionResult = {
-                    id: Date.now(),
-                    player: targetRole,
-                    damage: 0,
-                    message: "破壊"
-                };
-            } else {
-                const attackCardInfo = {
-                    name: randomCard.name,
-                    imgSrc: randomCard.imgSrc,
-                    value: randomCard.value,
-                    element: randomCard.element || null,
-                    description: randomCard.description,
-                    player: actorRole,
-                    target: targetRole,
-                    hit: true,
-                    controlled: true,
-                    afterTurn: nextTurn
-                };
-                if (randomCard.hitRate !== undefined) {
-                    attackCardInfo.hitRate = randomCard.hitRate;
-                }
-                sendGameState(targetRole, randomCard.value, attackCardInfo, "", null, null, nextControlEffect, null);
+        try {
+            if (!controlEffectGlobal
+                || controlEffectGlobal.target !== actorRole
+                || !isMyTurnGlobal
+                || pendingAttackGlobal > 0) {
+                controlledActionInProgress = false;
+                lastControlledActionKey = null;
+                queueMicrotask(maybeRunControlledRound);
                 return;
             }
-        } else if (randomCard.type === "heal") {
-            const targetRole = getRandomPlayerRole();
-            if (usedCardInfo) usedCardInfo.target = targetRole;
-            const beforeHp = getRoleHp(targetRole);
-            const healedHp = Math.min(99, beforeHp + randomCard.value);
-            setRoleHp(targetRole, healedHp);
-            actionResult = {
-                id: Date.now(),
-                player: targetRole,
-                type: "heal",
-                amount: healedHp - beforeHp
-            };
-        } else if (randomCard.type === "defense") {
-            if (usedCardInfo) usedCardInfo.target = actorRole;
-            setRoleDefense(actorRole, randomCard.value);
-            actionResult = {
-                id: Date.now(),
-                player: actorRole,
-                damage: 0,
-                message: "守備"
-            };
-        }
-    }
 
-    const nextTurnRole = getRoleHp("player1") <= 0 || getRoleHp("player2") <= 0 ? "end" : nextTurn;
-    sendGameState(nextTurnRole, 0, null, "", actionResult, handEffect, nextControlEffect, keepUsedCardForTurn(usedCardInfo, nextTurnRole));
+            const actorHand = getHandByRole(actorRole);
+            const actionCandidates = getControlledActionCandidates(actorRole);
+
+            if (actionCandidates.length === 0) {
+                controlledActionInProgress = false;
+                const nextTurnRole = getNextTurnRoleAfterAction(nextTurn);
+                sendGameState(nextTurnRole, 0, null, "", actionResult, null, nextControlEffect, null);
+                return;
+            }
+
+            const randomCandidate = actionCandidates[Math.floor(Math.random() * actionCandidates.length)];
+            const randomCardKey = randomCandidate.cardKey;
+            const randomCard = randomCandidate.card;
+            actorHand.splice(randomCandidate.handIndex, 1);
+            reserveDrawForRole(actorRole, 1);
+            usedCardInfo = makeUsedCardInfo(actorRole, randomCard);
+            if (usedCardInfo) usedCardInfo.controlled = true;
+
+            if (randomCard.type === "attack") {
+                const targetRole = getRandomPlayerRole();
+                if (usedCardInfo) usedCardInfo.target = targetRole;
+                const hit = randomCard.hitRate === undefined || Math.random() < randomCard.hitRate;
+
+                if (!hit) {
+                    actionResult = makeMissResult(targetRole);
+                } else if (randomCardKey === "mojibake") {
+                    handEffect = destroyRandomHandCard(targetRole);
+                    actionResult = makeHandDestroyResult(targetRole);
+                } else {
+                    const attackCardInfo = makeControlledAttackInfo(actorRole, targetRole, randomCard, nextTurn);
+                    controlledActionInProgress = false;
+                    sendGameState(targetRole, randomCard.value, attackCardInfo, "", null, null, nextControlEffect, null);
+                    return;
+                }
+            } else if (randomCard.type === "heal") {
+                const targetRole = getRandomPlayerRole();
+                if (usedCardInfo) usedCardInfo.target = targetRole;
+                actionResult = applyControlledHeal(randomCard, targetRole);
+            } else if (randomCard.type === "defense") {
+                if (usedCardInfo) usedCardInfo.target = actorRole;
+                setRoleDefense(actorRole, 0);
+                actionResult = makeSafeResult(actorRole);
+            }
+
+            controlledActionInProgress = false;
+            const nextTurnRole = getNextTurnRoleAfterAction(nextTurn);
+            sendGameState(nextTurnRole, 0, null, "", actionResult, handEffect, nextControlEffect, keepUsedCardForTurn(usedCardInfo, nextTurnRole));
+        } catch (error) {
+            console.error("controlled random card selection failed", error);
+            controlledActionInProgress = false;
+            lastControlledActionKey = null;
+            const nextTurnRole = getNextTurnRoleAfterAction(nextTurn);
+            sendGameState(nextTurnRole, 0, null, "", makeControlResultFallback(actorRole), null, nextControlEffect, null);
+        }
     }, CONTROL_RANDOM_PREVIEW_MS);
 }
 
@@ -1386,23 +1389,23 @@ function maybeRunControlledRound() {
 
     if (!isTutorialComplete(RANDOM_TUTORIAL_KEY)) {
         update(gameRoomRef, {
-            selected_card: {
-                id: Date.now(),
-                player: myPlayerRole,
-                label: "ランダム",
-                randomPending: true,
-                keep: true,
-                showOnTurn: myPlayerRole
-            }
+            selected_card: makeRandomPendingSelectedCard(myPlayerRole)
         });
         startTutorial("random-control");
-        return;
+        if (isTutorialActive && tutorialMode === "random-control") return;
     }
 
     lastControlledActionKey = actionKey;
     controlledActionInProgress = true;
     setTimeout(() => {
-        executeControlledRandomAction();
+        try {
+            executeControlledRandomAction();
+        } catch (error) {
+            console.error("controlled random action failed", error);
+            controlledActionInProgress = false;
+            lastControlledActionKey = null;
+            resetTimerWhenTurnStateChanges(currentTurnGlobal, pendingAttackGlobal);
+        }
     }, CONTROLLED_ROUND_DELAY_MS);
 }
 
@@ -1442,6 +1445,14 @@ function canDefenseCardBlockAttack(card, attackCard = currentAttackCardGlobal) {
         ? card.blocksElements
         : (card.blocksElement ? [card.blocksElement] : []);
     return supportedElements.includes(attackElement);
+}
+
+function canSelectDefenseCard(role, card, handIndex) {
+    const selected = selectedDefenseCards[role] || [];
+    if (selected.some(item => item.handIndex === handIndex)) return true;
+    if (selected.some(item => item.reflectAttack)) return false;
+    if (card?.reflectAttack && selected.length > 0) return false;
+    return true;
 }
 
 function getDefenseCardBattleLabel(card, attackValue = pendingAttackGlobal) {
@@ -1537,9 +1548,7 @@ function tryReflectPendingAttack(role) {
     currentAttackCardGlobal = null;
     clearSelectedDefenseCards();
     clearCardActionDisplays();
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearSelectedCardState();
     isMyTurnGlobal = false;
     renderHands();
     sendGameState(reflectedTarget, reflectedValue, reflectedAttackCard, "", reflectionResult);
@@ -1580,15 +1589,6 @@ function getCurrentPlayerHand() {
 
 const BOOST_CARD_KEY = MAGIC_CARD_KEY;
 const BOOST_LABEL = "&times;2";
-
-function getCardLabel(card) {
-    if (!card) return "";
-    if (card === CARDS.enadori) return BOOST_LABEL;
-    if (card.type === "attack") return `謾ｻ ${card.value}`;
-    if (card.type === "heal") return `蝗・${card.value}`;
-    if (card.type === "defense") return `螳・${card.value}`;
-    return "";
-}
 
 function getDisplayCardLabel(card) {
     if (!card) return "";
@@ -1693,64 +1693,7 @@ function hideHandHoverPreview(sourceEl = null) {
 }
 
 function renderSelectedCardInfo() {
-    if (selectedCardIndex === null || !myPlayerRole) return;
-
-    const hand = getCurrentPlayerHand();
-    const cardKey = hand[selectedCardIndex];
-    const card = CARDS[cardKey];
-    if (!card) return;
-
-    const boostCardKey = selectedBoostCardIndexes.length > 0 ? hand[selectedBoostCardIndexes[0]] : null;
-    const boostCard = boostCardKey === "enadori" ? CARDS[boostCardKey] : null;
     renderSelectedCardInfoV2();
-    return;
-
-    renderSelectedCardInfoV2();
-    return;
-
-    const targetDiv = (myPlayerRole === "player1") ? player1Div : player2Div;
-    if (!targetDiv) return;
-
-    let infoDiv = targetDiv.querySelector(".selected-card-info");
-    if (!infoDiv) {
-        infoDiv = document.createElement("div");
-        infoDiv.className = "selected-card-info";
-        targetDiv.appendChild(infoDiv);
-    }
-
-    const label = getCardLabel(card);
-    const boostHtml = boostCard ? `
-        <div style="border-top: 1px solid #aaa; margin-top: 6px; padding-top: 6px;">
-            <img src="${boostCard.imgSrc}" alt="${boostCard.name}" style="width: 34px; height: 34px; vertical-align: middle;">
-            <span style="font-weight: bold; margin-left: 5px;">${boostCard.name} (×2)</span>
-            <div style="font-size: 11px; color: #555; margin-top: 4px;">${boostCard.description || ""}</div>
-        </div>
-    ` : "";
-
-    infoDiv.innerHTML = `
-    <div style="border: 2px solid #666; padding: 5px; margin-top: 10px; background: rgba(255,255,255,0.8); border-radius: 5px; text-align: center;">
-        <img src="${card.imgSrc}" alt="${card.name}" style="width: 40px; height: 40px; vertical-align: middle;">
-        <span style="font-weight: bold; margin-left: 5px;">${card.name} (${label}${boostCard ? " ×2" : ""})</span>
-        <div style="font-size: 11px; color: #555; margin-top: 4px;">${card.description}</div>
-        ${boostHtml}
-        <div style="font-size: 11px; color: #555; margin-top: 2px;">逕ｻ髱｢繧偵け繝ｪ繝・け縺励※陦悟虚繧堤｢ｺ螳・/div>
-    </div>
-    `;
-
-    update(gameRoomRef, {
-        selected_card: {
-            player: myPlayerRole,
-            name: card.name,
-            label: `${label}${boostCard ? " ×2" : ""}`,
-            description: card.description,
-            imgSrc: card.imgSrc,
-            boostName: boostCard?.name || null,
-            boostLabel: boostCard ? BOOST_LABEL : null,
-            boostDescription: boostCard?.description || null,
-            boostImgSrc: boostCard?.imgSrc || null,
-            boosts: boostEntries.map(makeBoostCardInfo)
-        }
-    });
 }
 
 function renderSelectedCardInfoV2() {
@@ -1833,23 +1776,11 @@ function updateAttackTargetDisplay(attackerRole = myPlayerRole, targetRole = sel
 
 function updateAttackerDisplayOrder(attackerRole) {
     if (!battleSelectDiv || (attackerRole !== "player1" && attackerRole !== "player2")) return;
-    if (displayedAttackerRole === null) {
-        displayedAttackerRole = attackerRole;
-        battleSelectDiv.classList.toggle("attacker-player2", attackerRole === "player2");
-        return;
-    }
-    if (attackerRole === displayedAttackerRole && pendingAttackerRole === null) return;
-    if (attackerRole === pendingAttackerRole) return;
+    if (attackerRole === displayedAttackerRole) return;
 
-    clearTimeout(attackerOrderSwitchTimer);
-    pendingAttackerRole = attackerRole;
-    battleSelectDiv.classList.add("switching-attacker-order");
-    attackerOrderSwitchTimer = setTimeout(() => {
-        displayedAttackerRole = pendingAttackerRole;
-        pendingAttackerRole = null;
-        battleSelectDiv.classList.toggle("attacker-player2", displayedAttackerRole === "player2");
-        requestAnimationFrame(() => battleSelectDiv.classList.remove("switching-attacker-order"));
-    }, 150);
+    displayedAttackerRole = attackerRole;
+    battleSelectDiv.classList.remove("switching-attacker-order");
+    battleSelectDiv.classList.toggle("attacker-player2", attackerRole === "player2");
 }
 
 function updateObservedAttackTargetDisplay(attackerRole, targetRole, holdForResult = false) {
@@ -2028,6 +1959,7 @@ function useDefenseCardDuringAttack(handIndex, card) {
     if (selectedIndex >= 0) {
         selected.splice(selectedIndex, 1);
     } else {
+        if (!canSelectDefenseCard(myPlayerRole, card, handIndex)) return;
         selected.push({
             handIndex,
             cardKey,
@@ -2045,9 +1977,7 @@ function useDefenseCardDuringAttack(handIndex, card) {
 
     selectedDefenseCards[myPlayerRole] = selected;
     syncSelectedDefenseState(myPlayerRole);
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearSelectedCardState();
     renderHands();
     renderDefenseCardDisplay(myPlayerRole, myPlayerRole === "player1" ? player1Div : player2Div);
     if (isTutorialActive && tutorialMode === "defense-select") {
@@ -2059,32 +1989,20 @@ function useDefenseCardDuringAttack(handIndex, card) {
 }
 
 function renderDefenseCardDisplay(player, targetDiv) {
-    targetDiv?.querySelectorAll(".defense-card-display").forEach(el => el.remove());
+    targetDiv?.querySelectorAll(".defense-card-list, .defense-card-display").forEach(el => el.remove());
 
     const cards = defenseCardsGlobal[player] || [];
     if (!targetDiv || cards.length === 0) return;
 
+    const listDiv = document.createElement("div");
+    listDiv.className = "defense-card-list";
     cards.forEach(card => {
         const dispDiv = document.createElement("div");
         dispDiv.className = "defense-card-display";
         dispDiv.innerHTML = renderCardInfoBlock(card, getDefenseCardBattleLabel(card));
-        targetDiv.appendChild(dispDiv);
+        listDiv.appendChild(dispDiv);
     });
-    return;
-
-    cards.forEach(card => {
-        const dispDiv = document.createElement("div");
-        dispDiv.className = "defense-card-display";
-        dispDiv.innerHTML = `
-        <div style="border: 2px solid #666; padding: 5px; margin-top: 10px; background: rgba(255,255,255,0.8); border-radius: 5px; text-align: center;">
-            <img src="${card.imgSrc}" alt="${card.name}" style="width: 40px; height: 40px; vertical-align: middle;">
-            <span style="font-weight: bold; margin-left: 5px;">${card.name} (守 ${card.value})</span>
-        <div style="font-size: 11px; color: #555; margin-top: 4px;">${card.description || ""}</div>
-        </div>
-        `;
-        dispDiv.innerHTML = renderCardInfoBlock(card, `守 ${card.value}`);
-        targetDiv.appendChild(dispDiv);
-    });
+    targetDiv.appendChild(listDiv);
 }
 
 function renderDamageResultDisplay(result) {
@@ -2240,9 +2158,7 @@ window.executeCard = function() {
         // if (info) info.remove();
 
         renderHands();
-        selectedCardIndex = null;
-        selectedBoostCardIndexes = [];
-        selectedHandMagicCardIndexes = [];
+        clearSelectedCardState();
 
         // 勝敗判定
         if (mycurrenthp <= 0) {
@@ -2290,9 +2206,7 @@ window.executeCard = function() {
 
         clearCardActionDisplays();
         renderHands();
-        selectedCardIndex = null;
-        selectedBoostCardIndexes = [];
-        selectedHandMagicCardIndexes = [];
+        clearSelectedCardState();
 
         // 攻撃カードは常に相手へ向ける
         const nextTurn = getOpponentRole(myPlayerRole);
@@ -2399,9 +2313,7 @@ window.executeCard = function() {
 
     clearCardActionDisplays();
     renderHands();
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearSelectedCardState();
     sendGameState((myPlayerRole === "player1") ? "player2" : "player1", 0, null, "", actionResult);
 }
 
@@ -2522,8 +2434,6 @@ function renderHands() {
     tekiMagicHandDiv.innerHTML = "";
     document.getElementById("my-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
     document.getElementById("enemy-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
-    document.getElementById("my-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
-    document.getElementById("enemy-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
 
     const getLabel = (type, value) => {
         if (type === "attack") return `攻${value}`;
@@ -2583,7 +2493,9 @@ function renderHands() {
                 btn.classList.add("magic-selected");
             }
             const canDefendCurrentAttack = canDefenseCardBlockAttack(card, currentAttackCardGlobal);
-            if (!destroyed && role === myPlayerRole && isMyTurnGlobal && pendingAttackGlobal > 0 && canDefendCurrentAttack) {
+            const canSelectCurrentDefense = canDefendCurrentAttack
+                && canSelectDefenseCard(role, card, handIndex);
+            if (!destroyed && role === myPlayerRole && isMyTurnGlobal && pendingAttackGlobal > 0 && canSelectCurrentDefense) {
                 btn.classList.add("defense-turn-available");
                 const shouldStayBright = tutorialMode === "defense-select"
                     || tutorialMode === "defense-confirm";
@@ -2626,9 +2538,12 @@ function renderHands() {
             if (card.mpCost) {
                 cardValueClasses.push("mp-card-value");
             }
+            const cardValueHtml = cardValueLabel
+                ? `<div class="${cardValueClasses.join(" ")}">${cardValueLabel}</div>`
+                : "";
             btn.innerHTML = `
             <img src="${card.imgSrc}" alt="${card.name}">
-            <div class="${cardValueClasses.join(" ")}">${cardValueLabel}</div>
+            ${cardValueHtml}
             `;
             if (!destroyed) {
                 btn.onclick = () => selectCard(handIndex);
@@ -2650,7 +2565,7 @@ function renderHands() {
             } else if (!isMyTurnGlobal) {
                 btn.disabled = true;
             } else if (pendingAttackGlobal > 0) {
-                if (!canDefendCurrentAttack) btn.disabled = true;
+                if (!canSelectCurrentDefense) btn.disabled = true;
             }
             if (!destroyed && role === myPlayerRole && cardKey === MAGIC_CARD_KEY && pendingAttackGlobal === 0) {
                 const selectedCard = getSelectedCard();
@@ -2854,9 +2769,7 @@ function handleWaitingForOpponent(data) {
     gameStartedGlobal = false;
     isMyTurnGlobal = false;
     pendingAttackGlobal = 0;
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearSelectedCardState();
     lastTimerStateKey = null;
     stopTimer();
     clearSelectedDefenseCards();
@@ -3053,9 +2966,7 @@ window.confirmPlayerName = function() {
 
     const targetDiv = (myPlayerRole === "player1") ? player1Div : player2Div;
     if (isMyTurnGlobal && pendingAttackGlobal > 0) {
-        selectedCardIndex = null;
-        selectedBoostCardIndexes = [];
-        selectedHandMagicCardIndexes = [];
+        clearSelectedCardState();
     }
     if (targetDiv && isMyTurnGlobal && pendingAttackGlobal > 0 && selectedCardIndex === null) {
         let infoDiv = targetDiv.querySelector(".selected-card-info");
@@ -3097,12 +3008,8 @@ if (ac?.player && pendingAttackGlobal > 0) {
 
 // ラウンド開始（attack_card も selected_card も null）になったら全表示をクリア
 if ((!ac || pendingAttackGlobal === 0) && !sc) {
-    [p1div, p2div].forEach(div => {
-        div?.querySelectorAll(".selected-card-info, .selected-card-info-remote, .attack-card-display, .attack-total-display, .defense-card-display").forEach(el => el.remove());
-    });
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearCardActionDisplays();
+    clearSelectedCardState();
 }
 
 // 相手の selected_card（カード選択中）表示
@@ -3135,11 +3042,14 @@ if (sc && sc.player && (sc.player !== myPlayerRole || sc.keep)) {
         if (sc.keep && !keepRandomForTutorial) {
             const selectedCardId = sc.id || `${sc.player}-${sc.name}-${sc.showOnTurn || ""}`;
             lastRenderedSelectedCardId = selectedCardId;
+            const displayDuration = sc.controlled
+                ? CONTROLLED_CARD_ACTION_DISPLAY_MS
+                : CARD_ACTION_DISPLAY_MS;
             setTimeout(() => {
                 if (lastRenderedSelectedCardId === selectedCardId) {
                     update(gameRoomRef, { selected_card: null });
                 }
-            }, CARD_ACTION_DISPLAY_MS);
+            }, displayDuration);
         } else if (!sc.keep) {
             lastRenderedSelectedCardId = null;
         }
@@ -3291,6 +3201,8 @@ function renderCardBook(filter = "all") {
 
 function openCardBook() {
     if (!cardBookPopup) return;
+    closeTutorial(false);
+    stopTimer();
     renderCardBook(document.querySelector(".card-book-filter.is-active")?.dataset.filter || "all");
     cardBookPopup.classList.add("is-open");
     cardBookPopup.setAttribute("aria-hidden", "false");
@@ -3300,6 +3212,9 @@ function closeCardBook() {
     if (!cardBookPopup) return;
     cardBookPopup.classList.remove("is-open");
     cardBookPopup.setAttribute("aria-hidden", "true");
+    lastTimerStateKey = null;
+    resetTimerWhenTurnStateChanges(currentTurnGlobal, pendingAttackGlobal);
+    maybeStartTutorial();
 }
 
 function openCredit() {
@@ -3420,12 +3335,9 @@ let lastResetTrigger = 0;
 window.resetGame = function() {
     shouldAnimateHandFeedIn = true;
     shouldAnimateHandSortAfterFeedIn = true;
-    clearTimeout(attackerOrderSwitchTimer);
     clearTimeout(attackDisplayAfterResultTimer);
-    attackerOrderSwitchTimer = null;
     attackDisplayAfterResultTimer = null;
     displayedAttackerRole = null;
-    pendingAttackerRole = null;
     heldAttackDisplayAfterResult = null;
     battleSelectDiv?.classList.remove("attacker-player2", "switching-attacker-order");
     closeTutorial(false);
@@ -3450,9 +3362,7 @@ window.resetGame = function() {
     controlledActionInProgress = false;
     lastControlledActionKey = null;
     updateControlledPlayerDisplay();
-    selectedCardIndex = null;
-    selectedBoostCardIndexes = [];
-    selectedHandMagicCardIndexes = [];
+    clearSelectedCardState();
     mycurrentmp = INITIAL_MP;
     tekicurrentmp = INITIAL_MP;
     myMagicHand = [];
@@ -3571,6 +3481,7 @@ if (timerRemaining <= 0) {
         player: myPlayerRole,
         damage: finalDamage
     };
+    const nextTurnAfterDefense = currentAttackCardGlobal?.afterTurn || myPlayerRole;
     pendingAttackGlobal = 0;
     currentAttackCardGlobal = null;
     clearSelectedDefenseCards();
@@ -3586,7 +3497,7 @@ if (timerRemaining <= 0) {
     if (newHp <= 0) {
         sendGameState("end", 0, null, timeoutLog, damageResult);
     } else {
-        sendGameState(myPlayerRole, 0, null, timeoutLog, damageResult);
+        sendGameState(nextTurnAfterDefense, 0, null, timeoutLog, damageResult);
     }
     } else {
         // 通常ターンで時間切れ → 相手にターンを渡す

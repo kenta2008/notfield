@@ -128,12 +128,7 @@ if ($status) {
     Write-Host "No changes. Skipping commit."
 }
 
-$upstream = (& $GitCommand rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null)
-if ($LASTEXITCODE -eq 0 -and $upstream) {
-    Invoke-Step $GitCommand @("push")
-} else {
-    Invoke-Step $GitCommand @("push", "-u", "origin", $branch)
-}
+Invoke-Step $GitCommand @("push", "-u", "origin", $branch)
 
 Invoke-Step $FirebaseCommand @("deploy")
 

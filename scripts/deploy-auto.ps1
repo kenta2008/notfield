@@ -72,6 +72,46 @@ function Assert-NoPrivateSecrets {
     }
 }
 
+function Ensure-GitHubKnownHost {
+    param([string]$RemoteUrl)
+
+    if ($RemoteUrl -notmatch "github\.com[:/]") {
+        return
+    }
+
+    $sshDir = Join-Path $env:USERPROFILE ".ssh"
+    $knownHosts = Join-Path $sshDir "known_hosts"
+
+    if (-not (Test-Path $sshDir)) {
+        New-Item -ItemType Directory -Path $sshDir | Out-Null
+    }
+    if (-not (Test-Path $knownHosts)) {
+        New-Item -ItemType File -Path $knownHosts | Out-Null
+    }
+
+    $sshKeygen = Get-Command "ssh-keygen" -ErrorAction SilentlyContinue
+    if ($sshKeygen) {
+        & $sshKeygen.Source -F "github.com" -f $knownHosts *> $null
+        if ($LASTEXITCODE -eq 0) {
+            return
+        }
+    } else {
+        $existingKnownHosts = Get-Content -Path $knownHosts -Raw -ErrorAction SilentlyContinue
+        if ($existingKnownHosts -match "(^|`n)github\.com\s") {
+            return
+        }
+    }
+
+    Write-Host "Adding GitHub SSH host keys to $knownHosts"
+    $githubHostKeys = @(
+        "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl",
+        "github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=",
+        "github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk="
+    )
+
+    Add-Content -Path $knownHosts -Value $githubHostKeys
+}
+
 if (-not (Test-Path "firebase.json")) {
     throw "firebase.json was not found. Run this script from the folder that contains firebase.json."
 }
@@ -104,6 +144,8 @@ $remote = (& $GitCommand remote get-url origin 2>$null)
 if (-not $remote) {
     throw "Git remote origin is not set. Run: git remote add origin <URL>"
 }
+$remote = $remote.Trim()
+Ensure-GitHubKnownHost $remote
 
 $status = (& $GitCommand status --porcelain)
 if ($status) {

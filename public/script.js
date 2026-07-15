@@ -274,6 +274,7 @@ const trainingButton = document.querySelector(".training-button");
 const bookButton = document.querySelector(".book-button");
 const cardBookPopup = document.getElementById("card-book-popup");
 const cardBookContainer = document.getElementById("card-book-container");
+const cardBookFeatured = document.getElementById("card-book-featured");
 const cardBookCloseButton = document.getElementById("card-book-close");
 const cardBookFilterButtons = [...document.querySelectorAll(".card-book-filter")];
 const creditOpenButton = document.getElementById("credit-open");
@@ -3455,31 +3456,50 @@ function matchesCardBookFilter(card, filter = "all") {
     return card.type === filter;
 }
 
+function setCardBookFeatured(card, cardKey = "") {
+    if (!cardBookFeatured) return;
+    if (!card) {
+        cardBookFeatured.innerHTML = "";
+        return;
+    }
+    cardBookFeatured.innerHTML = renderCardInfoBlock(card, getDisplayCardLabel(card));
+    cardBookContainer?.querySelectorAll(".card-book-slot").forEach(slot => {
+        slot.classList.toggle("is-selected", slot.dataset.cardKey === cardKey);
+    });
+}
+
 function renderCardBook(filter = "all") {
     if (!cardBookContainer) return;
     cardBookContainer.innerHTML = "";
 
-    Object.entries(CARDS)
-        .filter(([, card]) => matchesCardBookFilter(card, filter))
-        .forEach(([cardKey, card]) => {
-            const slot = document.createElement("button");
-            slot.type = "button";
-            slot.className = "card-book-slot";
-            slot.dataset.type = card.type;
-            slot.dataset.cardKey = cardKey;
-            slot.dataset.element = card.element || "";
-            slot.setAttribute("aria-label", `${card.name}: ${card.description}`);
-            slot.innerHTML = `
-                <span class="card-book-icon-wrap" aria-hidden="true">
-                    <img class="card-book-icon" src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
-                    <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
-                </span>
-                <div class="card-book-preview" role="tooltip">
-                    ${renderCardInfoBlock(card, getDisplayCardLabel(card))}
-                </div>
-            `;
-            cardBookContainer.appendChild(slot);
-        });
+    const entries = Object.entries(CARDS)
+        .filter(([, card]) => matchesCardBookFilter(card, filter));
+
+    entries.forEach(([cardKey, card]) => {
+        const slot = document.createElement("button");
+        slot.type = "button";
+        slot.className = "card-book-slot";
+        slot.dataset.type = card.type;
+        slot.dataset.cardKey = cardKey;
+        slot.dataset.element = card.element || "";
+        slot.setAttribute("aria-label", `${card.name}: ${card.description}`);
+        slot.innerHTML = `
+            <span class="card-book-icon-wrap" aria-hidden="true">
+                <img class="card-book-icon" src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
+            </span>
+            <div class="card-book-preview" role="tooltip">
+                ${renderCardInfoBlock(card, getDisplayCardLabel(card))}
+            </div>
+        `;
+        slot.addEventListener("click", () => setCardBookFeatured(card, cardKey));
+        slot.addEventListener("mouseenter", () => setCardBookFeatured(card, cardKey));
+        slot.addEventListener("focus", () => setCardBookFeatured(card, cardKey));
+        cardBookContainer.appendChild(slot);
+    });
+
+    const [firstCardKey, firstCard] = entries[0] || [];
+    setCardBookFeatured(firstCard, firstCardKey);
 }
 
 function openCardBook() {

@@ -1,6 +1,15 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAKZp4qCuyS77TT8KqFmvEc5WqE_lajjEU",
+  authDomain: "notfield.firebaseapp.com",
+  databaseURL: "https://notfield-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "notfield",
+  storageBucket: "notfield.firebasestorage.app",
+  messagingSenderId: "630382594114",
+  appId: "1:630382594114:web:e98a5234220195f3f845db"
+};
 
 
 const app = initializeApp(firebaseConfig);
@@ -66,12 +75,14 @@ const CARDS = {
     mobairubatteri: { name:"モバイルバッテリー", type:"defense", value: 6, description:"モバイルバッテリーはお守り 守6", imgSrc: "images/defense/mobairubatteri.png"},
     //確率系
     nuton: { name:"ニュートンのゆりかご", type:"defense", value: 0, reflectAttack: true, description:"攻撃を確定で跳ね返す", imgSrc: "images/kakuritu/nuton.png"},
+    choubo: { name:"帳簿", type:"special", value: 0, drawCards: 2, expandHand: 2, description:"手札を2枚追加し、最大手札枠も2増やす", imgSrc: "images/attack/tyobo.png"},
 }
 
 
 
 const cardKeys = Object.keys(CARDS);
 const MAX_HAND_CARDS = 8;
+const MAX_EXPANDED_HAND_CARDS = 20;
 const INITIAL_MP = 20;
 const MAGIC_CARD_KEY = "enadori";
 const FIXED_CARD_DRAW_RATES = {
@@ -83,7 +94,8 @@ const FIXED_CARD_DRAW_RATES = {
 const CARD_DRAW_WEIGHTS = {
     heal: 0.4,
     defense: 1.0,
-    attack: 1.1
+    attack: 1.1,
+    special: 0.35
 };
 
 const ATTRIBUTE_META = {
@@ -197,6 +209,10 @@ let pendingDrawsGlobal = {
     player1: 0,
     player2: 0
 };
+let handLimitGlobal = {
+    player1: MAX_HAND_CARDS,
+    player2: MAX_HAND_CARDS
+};
 let selectedAttackTargetRole = "player2";
 let damageResultGlobal = null;
 let lastRenderedDamageResultId = null;
@@ -219,6 +235,7 @@ const RESULT_SHOW_DELAY_MS = 500;
 const VICTORY_SCREEN_DELAY_MS = RESULT_SHOW_DELAY_MS + RESULT_DISPLAY_MS + KNOCKOUT_DISPLAY_MS + 300;
 const CARD_ACTION_DISPLAY_MS = 2100;
 const CONTROLLED_CARD_ACTION_DISPLAY_MS = 3600;
+const DEFENSE_REVEAL_INTERVAL_MS = 400;
 const ATTACK_DISPLAY_AFTER_RESULT_DELAY_MS = 300;
 const CARD_DRAW_SOUND_GAP_MS = 200;
 const HAND_CARD_FEED_IN_GAP_MS = 200;
@@ -235,7 +252,7 @@ let freshHandIndexesGlobal = {
     player2: new Set()
 };
 
-const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake"]);
+const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake", "choubo"]);
 
 const player1Div = document.querySelector(".player1");
 const player2Div = document.querySelector(".player2");
@@ -265,6 +282,7 @@ const trainingButton = document.querySelector(".training-button");
 const bookButton = document.querySelector(".book-button");
 const cardBookPopup = document.getElementById("card-book-popup");
 const cardBookContainer = document.getElementById("card-book-container");
+const cardBookFeatured = document.getElementById("card-book-featured");
 const cardBookCloseButton = document.getElementById("card-book-close");
 const cardBookFilterButtons = [...document.querySelectorAll(".card-book-filter")];
 const creditOpenButton = document.getElementById("credit-open");
@@ -1002,8 +1020,8 @@ function fitPlayerNameDisplay() {
         const isMobile = window.matchMedia("(max-width: 1004px)").matches;
         fitTextToSingleLine(player1NameTitle, isMobile ? 16 : 21, isMobile ? 10 : 12);
         fitTextToSingleLine(player2NameTitle, isMobile ? 16 : 21, isMobile ? 10 : 12);
-        fitTextToSingleLine(player1StatusName, isMobile ? 17 : 30, isMobile ? 10 : 14);
-        fitTextToSingleLine(player2StatusName, isMobile ? 17 : 30, isMobile ? 10 : 14);
+        fitTextToSingleLine(player1StatusName, isMobile ? 23 : 26, isMobile ? 10 : 14);
+        fitTextToSingleLine(player2StatusName, isMobile ? 23 : 26, isMobile ? 10 : 14);
     });
 }
 
@@ -1167,7 +1185,7 @@ function getMagicHandByRole(role) {
 
 function normalizeHand(hand) {
     return Array.isArray(hand)
-        ? hand.filter(cardKey => CARDS[cardKey]).slice(0, MAX_HAND_CARDS)
+        ? hand.filter(cardKey => CARDS[cardKey]).slice(0, MAX_EXPANDED_HAND_CARDS)
         : [];
 }
 
@@ -1177,7 +1195,26 @@ function normalizeMagicHand(hand) {
 
 function getHandOpenSlots(role) {
     const hand = getHandByRole(role);
-    return Math.max(0, MAX_HAND_CARDS - (Array.isArray(hand) ? hand.length : 0));
+    return Math.max(0, getHandLimitByRole(role) - (Array.isArray(hand) ? hand.length : 0));
+}
+
+function getHandLimitByRole(role) {
+    return Math.max(
+        MAX_HAND_CARDS,
+        Math.min(MAX_EXPANDED_HAND_CARDS, Number(handLimitGlobal[role]) || MAX_HAND_CARDS)
+    );
+}
+
+function setHandLimitByRole(role, limit) {
+    if (role !== "player1" && role !== "player2") return;
+    handLimitGlobal[role] = Math.max(
+        MAX_HAND_CARDS,
+        Math.min(MAX_EXPANDED_HAND_CARDS, Number(limit) || MAX_HAND_CARDS)
+    );
+}
+
+function expandHandLimitForRole(role, amount) {
+    setHandLimitByRole(role, getHandLimitByRole(role) + (Number(amount) || 0));
 }
 
 function getPendingDrawCapacity(role) {
@@ -1542,6 +1579,22 @@ function getDefenseCardBattleLabel(card, attackValue = pendingAttackGlobal) {
     return `${Math.round(card.reductionRate * 100)}%減（守 ${effectiveDefense}）`;
 }
 
+function makeDefenseRevealCards(role, attackValue = pendingAttackGlobal) {
+    return (selectedDefenseCards[role] || []).map(card => ({
+        cardKey: card.cardKey || "",
+        name: card.name || "",
+        type: card.type || "defense",
+        imgSrc: card.imgSrc || "",
+        value: Number(card.value) || 0,
+        reductionRate: Number(card.reductionRate) || 0,
+        reflectAttack: Boolean(card.reflectAttack),
+        blocksElement: card.blocksElement || null,
+        blocksElements: Array.isArray(card.blocksElements) ? card.blocksElements : [],
+        description: card.description || "",
+        battleLabel: getDefenseCardBattleLabel(card, attackValue)
+    }));
+}
+
 function getDefenseSummary(role) {
     const cards = (selectedDefenseCards[role] || []).filter(card =>
         canDefenseCardBlockAttack(card, currentAttackCardGlobal)
@@ -1711,6 +1764,7 @@ function getDisplayCardLabel(card) {
     if (card.type === "attack") return `攻 ${card.value}`;
     if (card.type === "heal") return `回 ${card.value}`;
     if (card.type === "defense") return getDefenseCardLabel(card);
+    if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
     return "";
 }
 
@@ -1744,12 +1798,13 @@ function makeBoostCardInfo(entry) {
 
 function renderCardInfoBlock(card, label, size = 40, showDescription = false) {
     const attributeMeta = getAttributeMeta(card?.element);
+    const isChouboCard = card?.imgSrc?.includes("tyobo.png");
     const attributeIcon = attributeMeta
         ? `<img class="card-attribute-icon" src="${attributeMeta.icon}" alt="${attributeMeta.alt}">`
         : "";
     const attributeNameClass = attributeMeta ? ` ${attributeMeta.nameClass}` : "";
     return `
-        <div class="card-info-panel${showDescription ? " has-description" : ""}">
+        <div class="card-info-panel${showDescription ? " has-description" : ""}${isChouboCard ? " choubo-card-info" : ""}">
             <div class="card-info-image">
                 <img src="${card.imgSrc}" alt="${card.name}">
             </div>
@@ -2162,6 +2217,30 @@ function renderDefenseCardDisplay(player, targetDiv) {
     targetDiv.appendChild(listDiv);
 }
 
+function renderRevealedDefenseSequence(targetDiv, cards = []) {
+    if (!targetDiv || !Array.isArray(cards) || cards.length === 0) return 0;
+
+    targetDiv
+        .querySelectorAll(".revealed-defense-sequence, .revealed-defense-card")
+        .forEach(el => el.remove());
+
+    const listDiv = document.createElement("div");
+    listDiv.className = "defense-card-list revealed-defense-sequence";
+    targetDiv.appendChild(listDiv);
+
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            if (!listDiv.isConnected) return;
+            const dispDiv = document.createElement("div");
+            dispDiv.className = "defense-card-display revealed-defense-card";
+            dispDiv.innerHTML = renderCardInfoBlock(card, card.battleLabel || getDefenseCardBattleLabel(card));
+            listDiv.appendChild(dispDiv);
+        }, index * DEFENSE_REVEAL_INTERVAL_MS);
+    });
+
+    return cards.length * DEFENSE_REVEAL_INTERVAL_MS;
+}
+
 function renderDamageResultDisplay(result) {
     if (!result || !result.player) return;
     if (result.id && result.id === lastRenderedDamageResultId) return;
@@ -2216,6 +2295,8 @@ function renderResultPanelDisplay(result) {
 
     const renderedResultId = result.id || Date.now();
     lastRenderedDamageResultId = renderedResultId;
+    const targetDivForSequence = (result.player === "player1") ? player1Div : player2Div;
+    const defenseRevealDelay = renderRevealedDefenseSequence(targetDivForSequence, result.usedDefenseCards);
     resultDisplayTimer = setTimeout(() => {
         resultDisplayTimer = null;
         const targetDiv = (result.player === "player1") ? player1Div : player2Div;
@@ -2235,7 +2316,12 @@ function renderResultPanelDisplay(result) {
             return;
         }
 
-        clearDisplayElements(CARD_ACTION_DISPLAY_SELECTOR, [targetDiv]);
+        targetDiv.querySelectorAll(CARD_ACTION_DISPLAY_SELECTOR).forEach(el => {
+            if (!el.classList.contains("revealed-defense-sequence")
+                && !el.classList.contains("revealed-defense-card")) {
+                el.remove();
+            }
+        });
         targetDiv.classList.add("player-result-active");
 
         const messageText = result.message && result.message !== "即死" && !isKnockout ? result.message : "";
@@ -2279,7 +2365,7 @@ function renderResultPanelDisplay(result) {
                 }
             }
         }, RESULT_DISPLAY_MS);
-    }, RESULT_SHOW_DELAY_MS);
+    }, RESULT_SHOW_DELAY_MS + defenseRevealDelay);
 }
 
 function reserveDrawForCurrentPlayer(count = 1) {
@@ -2329,6 +2415,7 @@ window.executeCard = function() {
 
     if (pendingAttackGlobal > 0) {
         if (tryReflectPendingAttack(myPlayerRole)) return;
+        const revealedDefenseCards = makeDefenseRevealCards(myPlayerRole, pendingAttackGlobal);
         const finalDamage = calculateDamageAfterDefense(pendingAttackGlobal, myPlayerRole);
         let logMsg = "";
         const usedDefenseCount = consumeSelectedDefenseCards(myPlayerRole);
@@ -2339,6 +2426,7 @@ window.executeCard = function() {
         mydefense = 0; 
         reserveDrawForCurrentPlayer(usedDefenseCount);
         const damageResult = makeDamageResult(myPlayerRole, finalDamage, currentAttackCardGlobal, hpBeforeDamage);
+        damageResult.usedDefenseCards = revealedDefenseCards;
         const nextTurnAfterDefense = currentAttackCardGlobal?.afterTurn || myPlayerRole;
         pendingAttackGlobal = 0;
         currentAttackCardGlobal = null;
@@ -2494,6 +2582,29 @@ window.executeCard = function() {
             damage: 0,
             message: "無事"
         };
+    } else if (card.type === "special" && cardKey === "choubo") {
+        const currentHand = getCurrentPlayerHand();
+        currentHand.splice(handIndex, 1);
+        expandHandLimitForRole(myPlayerRole, card.expandHand || card.drawCards || 0);
+        const addCount = Number(card.drawCards) || 0;
+        for (let i = 0; i < addCount; i++) {
+            currentHand.push(drawCardForNormalHand());
+            freshHandIndexesGlobal[myPlayerRole]?.add(currentHand.length - 1);
+        }
+        actionResult = {
+            id: Date.now(),
+            player: myPlayerRole,
+            damage: 0,
+            message: `+${addCount}枚`
+        };
+        selectedAttackTargetRole = getOpponentRole(myPlayerRole);
+        updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
+        clearCardActionDisplays();
+        renderHands();
+        clearSelectedCardState();
+        if (addCount > 0) playCardDrawSoundSequence(addCount);
+        sendGameState(getOpponentRole(myPlayerRole), 0, null, "", actionResult);
+        return;
     }
     
     // 通常の回復・防御カードの手札消費
@@ -2678,11 +2789,12 @@ function renderHands() {
     document.getElementById("my-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
     document.getElementById("enemy-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
 
-    const getLabel = (type, value) => {
+    const getLabel = (type, value, card = null) => {
         if (type === "attack") return `攻${value}`;
         if (type === "heal") return `回${value}`;
         if (type === "defense") return `守${value}`;
-        return value;
+        if (type === "special" && card?.drawCards) return `+${card.drawCards}枚`;
+        return value || "";
     }
 
     const renderHandButtons = (hand, targetDiv) => {
@@ -2773,7 +2885,7 @@ function renderHands() {
                     ? `${Math.round(card.reductionRate * 100)}%減`
                 : (card.type === "attack" && card.hitRate !== undefined
                     ? `${Math.round(card.hitRate * 100)}%攻${card.value}`
-                    : getLabel(card.type, card.value))));
+                    : getLabel(card.type, card.value, card))));
             const cardValueClasses = ["card-value"];
             if (card.type === "attack" && card.hitRate !== undefined) {
                 cardValueClasses.push("hit-rate-card-value");
@@ -3061,6 +3173,7 @@ window.confirmPlayerName = function() {
     shouldAnimateHandFeedIn = true;
     shouldAnimateHandSortAfterFeedIn = true;
     updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
+    lastResetTrigger = 0;
 
     isMyTurnGlobal = false;
     gameStartedGlobal = false;
@@ -3168,6 +3281,8 @@ window.confirmPlayerName = function() {
         player1: data.player1_pending_draws || 0,
         player2: data.player2_pending_draws || 0
     };
+    setHandLimitByRole("player1", data.player1_hand_limit || MAX_HAND_CARDS);
+    setHandLimitByRole("player2", data.player2_hand_limit || MAX_HAND_CARDS);
     if (data.reset_trigger && data.reset_trigger !== lastResetTrigger) {
         lastResetTrigger = data.reset_trigger;
         closeTutorial(false);
@@ -3435,6 +3550,7 @@ function getBookCardValueLabel(card) {
             : (card.value || "-");
     }
     if (card.type === "heal") return card.value || "-";
+    if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
     return "-";
 }
 
@@ -3446,31 +3562,50 @@ function matchesCardBookFilter(card, filter = "all") {
     return card.type === filter;
 }
 
+function setCardBookFeatured(card, cardKey = "") {
+    if (!cardBookFeatured) return;
+    if (!card) {
+        cardBookFeatured.innerHTML = "";
+        return;
+    }
+    cardBookFeatured.innerHTML = renderCardInfoBlock(card, getDisplayCardLabel(card));
+    cardBookContainer?.querySelectorAll(".card-book-slot").forEach(slot => {
+        slot.classList.toggle("is-selected", slot.dataset.cardKey === cardKey);
+    });
+}
+
 function renderCardBook(filter = "all") {
     if (!cardBookContainer) return;
     cardBookContainer.innerHTML = "";
 
-    Object.entries(CARDS)
-        .filter(([, card]) => matchesCardBookFilter(card, filter))
-        .forEach(([cardKey, card]) => {
-            const slot = document.createElement("button");
-            slot.type = "button";
-            slot.className = "card-book-slot";
-            slot.dataset.type = card.type;
-            slot.dataset.cardKey = cardKey;
-            slot.dataset.element = card.element || "";
-            slot.setAttribute("aria-label", `${card.name}: ${card.description}`);
-            slot.innerHTML = `
-                <span class="card-book-icon-wrap" aria-hidden="true">
-                    <img class="card-book-icon" src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
-                    <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
-                </span>
-                <div class="card-book-preview" role="tooltip">
-                    ${renderCardInfoBlock(card, getDisplayCardLabel(card))}
-                </div>
-            `;
-            cardBookContainer.appendChild(slot);
-        });
+    const entries = Object.entries(CARDS)
+        .filter(([, card]) => matchesCardBookFilter(card, filter));
+
+    entries.forEach(([cardKey, card]) => {
+        const slot = document.createElement("button");
+        slot.type = "button";
+        slot.className = "card-book-slot";
+        slot.dataset.type = card.type;
+        slot.dataset.cardKey = cardKey;
+        slot.dataset.element = card.element || "";
+        slot.setAttribute("aria-label", `${card.name}: ${card.description}`);
+        slot.innerHTML = `
+            <span class="card-book-icon-wrap" aria-hidden="true">
+                <img class="card-book-icon" src="${card.imgSrc}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
+            </span>
+            <div class="card-book-preview" role="tooltip">
+                ${renderCardInfoBlock(card, getDisplayCardLabel(card))}
+            </div>
+        `;
+        slot.addEventListener("click", () => setCardBookFeatured(card, cardKey));
+        slot.addEventListener("mouseenter", () => setCardBookFeatured(card, cardKey));
+        slot.addEventListener("focus", () => setCardBookFeatured(card, cardKey));
+        cardBookContainer.appendChild(slot);
+    });
+
+    const [firstCardKey, firstCard] = entries[0] || [];
+    setCardBookFeatured(firstCard, firstCardKey);
 }
 
 function openCardBook() {
@@ -3574,6 +3709,8 @@ function sendGameState(nextTurnRole, pendingAttackValue = 0, attackCardInfo = nu
         player2_def_cards: pendingAttackValue > 0 ? (defenseCardsGlobal.player2 || []) : [],
         player1_pending_draws: pendingDrawsGlobal.player1 || 0,
         player2_pending_draws: pendingDrawsGlobal.player2 || 0,
+        player1_hand_limit: getHandLimitByRole("player1"),
+        player2_hand_limit: getHandLimitByRole("player2"),
         player1_hand: myHand,
         player2_hand: tekiHand,
         player1_magic_hand: myMagicHand,
@@ -3641,6 +3778,10 @@ window.resetGame = function() {
     tekicurrentmp = INITIAL_MP;
     myMagicHand = [];
     tekiMagicHand = [];
+    handLimitGlobal = {
+        player1: MAX_HAND_CARDS,
+        player2: MAX_HAND_CARDS
+    };
     player1Mp.textContent = INITIAL_MP;
     player2Mp.textContent = INITIAL_MP;
     selectedAttackTargetRole = "player2";
@@ -3680,6 +3821,8 @@ window.resetGame = function() {
         player2_hand: p2Hand,
         player1_magic_hand: p1MagicHand,
         player2_magic_hand: p2MagicHand,
+        player1_hand_limit: MAX_HAND_CARDS,
+        player2_hand_limit: MAX_HAND_CARDS,
         pending_attack: 0,
         turn: "player1",//Player1が先行！！
         round: 1,
@@ -3744,6 +3887,7 @@ if (timerRemaining <= 0) {
 
     if (pendingAttackGlobal > 0) {
     if (tryReflectPendingAttack(myPlayerRole)) return;
+    const revealedDefenseCards = makeDefenseRevealCards(myPlayerRole, pendingAttackGlobal);
     const finalDamage = calculateDamageAfterDefense(pendingAttackGlobal, myPlayerRole);
     const usedDefenseCount = consumeSelectedDefenseCards(myPlayerRole);
     const hpBeforeDamage = mycurrenthp;
@@ -3752,6 +3896,7 @@ if (timerRemaining <= 0) {
     mydefense = 0;
     reserveDrawForCurrentPlayer(usedDefenseCount);
     const damageResult = makeDamageResult(myPlayerRole, finalDamage, currentAttackCardGlobal, hpBeforeDamage);
+    damageResult.usedDefenseCards = revealedDefenseCards;
     const nextTurnAfterDefense = currentAttackCardGlobal?.afterTurn || myPlayerRole;
     pendingAttackGlobal = 0;
     currentAttackCardGlobal = null;

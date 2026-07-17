@@ -1,15 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAKZp4qCuyS77TT8KqFmvEc5WqE_lajjEU",
-  authDomain: "notfield.firebaseapp.com",
-  databaseURL: "https://notfield-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "notfield",
-  storageBucket: "notfield.firebasestorage.app",
-  messagingSenderId: "630382594114",
-  appId: "1:630382594114:web:e98a5234220195f3f845db"
-};
 
 
 const app = initializeApp(firebaseConfig);

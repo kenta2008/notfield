@@ -1,6 +1,17 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAKZp4qCuyS77TT8KqFmvEc5WqE_lajjEU",
+  authDomain: "notfield.firebaseapp.com",
+  databaseURL: "https://notfield-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "notfield",
+  storageBucket: "notfield.firebasestorage.app",
+  messagingSenderId: "630382594114",
+  appId: "1:630382594114:web:e98a5234220195f3f845db"
+};
+
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
 const myhp = document.getElementById("myhp");
@@ -39,32 +50,39 @@ let tekidefense = 0;
 
 const CARDS = {
     //攻撃系
-    pencil: { name:"シャーペン", type:"attack", value: 10, description:"シャーペンの先で攻撃する 攻1", imgSrc: "images/attack/pen.png"},
-    hacking: { name:"ハッキング", type:"attack", value: 0, description:"相手の1回の行動で3回ランダムに行動させる", imgSrc: "images/attack/kontorora.png"},
-    mojibake: { name:"文字化けファイル", type:"attack", value: 0, description:"相手の手札を1枠壊す", imgSrc: "images/attack/mojibake.png"},
-    kusaifuku: { name:"臭い服", type:"attack", value: 7, description:"とにかく臭い 攻7", imgSrc: "images/attack/kusaifuku.png"},
-    gojyuukyuu: { name:"59点のテスト", type:"attack", value: 8, description:"とてもかなしい 攻8", imgSrc: "images/attack/59ten.png"},
-    kanningu: { name:"カンニング", type:"attack", value: 12, hitRate: 0.3, description:"命中率30% 攻12", imgSrc: "images/attack/kanningu.png"},
+    pencil: { name:"シャーペン", type:"attack", value: 10, description:"相手に攻撃力10を与えることができる。", imgSrc: "images/attack/pen.png"},
+    hacking: { name:"ハッキング", type:"attack", value: 0, description:"相手を3ターンランダムに行動させることができる。", imgSrc: "images/attack/kontorora.png"},
+    mojibake: { name:"文字化けファイル", type:"attack", value: 0, description:"相手の手札からカードを一枚消すことができる。", imgSrc: "images/attack/mojibake.png"},
+    kusaifuku: { name:"臭い服", type:"attack", value: 5, description:"部屋干しのにおいが臭すぎて気絶。5ダメージあたることができる。", imgSrc: "images/attack/kusaifuku.png"},
+    gojyuukyuu: { name:"59点のテスト", type:"attack", value: 6, description:"60点から合格です。", imgSrc: "images/attack/59ten.png"},
+    kanningu: { name:"カンニング", type:"attack", value: 12, hitRate: 0.3, description:"30%の確率で12ダメージを与えることができる。", imgSrc: "images/attack/kanningu.png"},
     
 
     //属性攻撃系
-    seisankari: { name:"青酸カリ", type:"attack", element:"material", value: 8, description:"物質属性。1ダメージでも受けると即死 攻8", imgSrc: "images/attack/seisankari.png"},
-    yousetu: { name:"溶接", type:"attack", element:"machine", value: 3, description:"機械属性。普通の守備では防げない 攻3", imgSrc: "images/attack/yousetsu.png"},
-    handa: { name:"はんだごて", type:"attack", element:"machine", value: 2, description:"機械属性。普通の守備では防げない 攻2", imgSrc: "images/attack/handagote.png"},
+    seisankari: { name:"青酸カリ", type:"attack", element:"material", value: 8, description:"1ダメージでも受けると即死する。", imgSrc: "images/attack/seisankari.png"},
+    ensan: { name:"塩酸", type:"attack", element:"material", value: 3, description:"1ダメージでも受けると即死する。", imgSrc: "images/attack/ensan.png"},
+    yousetu: { name:"溶接", type:"attack", element:"machine", value: 3, description:"機械属性。普通の守備では防ぐことができない。", imgSrc: "images/attack/yousetsu.png"},
+    handa: { name:"はんだごて", type:"attack", element:"machine", value: 2, description:"機械属性。普通の守備では防ぐことができない。", imgSrc: "images/attack/handagote.png"},
 
 
     //回復系
-    kakomon: { name:"過去問", type:"heal", value: 7, description:"過去問をもらって最高!! 回7", imgSrc: "images/heal/test.png"},
-    monita: { name:"モニター", type:"defense", value: 6, description:"モバイルバッテリーでどうやってまもれるん? 守6", imgSrc: "images/defense/monita.png"},
-    kyuukou: { name:"休講", type:"heal", value: 3, description:"マジ最高 回3", imgSrc: "images/heal/kyuukou.png"},
-    ramen: { name:"カップラーメン", type:"heal", value: 6, description:"これは必須 回6", imgSrc: "images/heal/ramen.png"},
+    kakomon: { name:"過去問", type:"heal", value: 5, description:"5HP回復することができる。", imgSrc: "images/heal/test.png"},
+    kyuukou: { name:"カフェイン", type:"heal", value: 10, description:"10HP回復することができる", imgSrc: "images/heal/kyuukou.png"},
+    ramen: { name:"カップラーメン", type:"heal", value: 3, description:"3HP回復することができる", imgSrc: "images/heal/ramen.png"},
+    megusuri: { name:"目薬", type:"mpheal", value: 5, description:"5MP回復することができる。", imgSrc: "images/heal/megusuri.png"},
+    ramune: { name:"ラムネ", type:"mpheal", value: 10, description:"10MP回復することができる。", imgSrc: "images/heal/ramune.png"},
     //防御
     enadori: { name:"エナジードリンク", type:"magic", value: 2, mpCost: 7, description:"7MPを消費して攻撃力を2倍にする", imgSrc: "images/heal/enadori.png"},
     harapeko: { name:"抵抗器", type:"defense", value: 0, reductionRate: 0.6, description:"受ける攻撃を60%減らす", imgSrc: "images/defense/teikou.png"},
-    mobairubatteri: { name:"モバイルバッテリー", type:"defense", value: 6, description:"モバイルバッテリーはお守り 守6", imgSrc: "images/defense/mobairubatteri.png"},
+    hakui: { name:"白衣", type:"defense", element:"material", value: 5, materialDefenseValue: 10, description:"物質属性の攻撃には守10、それ以外には守5", imgSrc: "images/defense/hakui.png"},
+    anzenmegane: { name:"安全メガネ", type:"defense", value: 4, description:"攻撃を防ぐことができる", imgSrc: "images/defense/anzenmegane.png"},
+    helmet: { name:"ヘルメット", type:"defense", value: 5, description:"攻撃を防ぐことができる", imgSrc: "images/defense/helmet.png"},
+    mobairubatteri: { name:"モバイルバッテリー", type:"defense", value: 6, description:"攻撃を防ぐことができる", imgSrc: "images/defense/mobairubatteri.png"},
     //確率系
-    nuton: { name:"ニュートンのゆりかご", type:"defense", value: 0, reflectAttack: true, description:"攻撃を確定で跳ね返す", imgSrc: "images/kakuritu/nuton.png"},
-    choubo: { name:"帳簿", type:"special", value: 0, drawCards: 2, expandHand: 2, description:"手札を2枚追加し、最大手札枠も2増やす", imgSrc: "images/attack/tyobo.png"},
+    nuton: { name:"ニュートンのゆりかご", type:"defense", value: 0, reflectAttack: true, description:"攻撃を確定で跳ね返すことができる", imgSrc: "images/kakuritu/nuton.png"},
+    choubo: { name:"帳簿", type:"special", element:"management", value: 0, drawCards: 2, expandHand: 2, description:"最大手札枠を1増やすことができる", imgSrc: "images/attack/tyobo.png"},
+    timecard: { name:"タイムカード", type:"special", element:"management", value: 0, extraTurn: true, description:"普通のカードと併せて使うと、自分のターンをもう一度行える", imgSrc: "images/special/timecard.png"},
+    relay: { name:"電磁リレー", type:"special", element:"electric", value: 0, repeatAttack: 1, description:"攻撃カードと併せて使うと、2連続攻撃を行える", imgSrc: "images/attack/relay.png"},
 }
 
 
@@ -74,6 +92,8 @@ const MAX_HAND_CARDS = 8;
 const MAX_EXPANDED_HAND_CARDS = 20;
 const INITIAL_MP = 20;
 const MAGIC_CARD_KEY = "enadori";
+const TIME_CARD_KEY = "timecard";
+const RELAY_CARD_KEY = "relay";
 const FIXED_CARD_DRAW_RATES = {
     enadori: 1 / 65,
     hacking: 1 / 50,
@@ -82,6 +102,7 @@ const FIXED_CARD_DRAW_RATES = {
 };
 const CARD_DRAW_WEIGHTS = {
     heal: 0.4,
+    mpheal: 0.35,
     defense: 1.0,
     attack: 1.1,
     special: 0.35
@@ -105,6 +126,18 @@ const ATTRIBUTE_META = {
         alt: "物質属性",
         nameClass: "material-attribute-name",
         valueClass: "material-card-value"
+    },
+    management: {
+        icon: "images/zokusei/fire.png",
+        alt: "経営属性",
+        nameClass: "management-attribute-name",
+        valueClass: "management-card-value"
+    },
+    electric: {
+        icon: "images/zokusei/m.png",
+        alt: "電気属性",
+        nameClass: "electric-attribute-name",
+        valueClass: "electric-card-value"
     }
 };
 
@@ -219,12 +252,17 @@ const SELECT_SOUND_SRC = "se/select.mp3";
 const PUNCH_SOUND_SRC = "se/punch.wav";
 const REFLECT_SOUND_SRC = "se/hansya.wav";
 const RESULT_DISPLAY_MS = 1800;
-const KNOCKOUT_DISPLAY_MS = 1500;
+const KNOCKOUT_DISPLAY_MS = 1200;
 const RESULT_SHOW_DELAY_MS = 500;
-const VICTORY_SCREEN_DELAY_MS = RESULT_SHOW_DELAY_MS + RESULT_DISPLAY_MS + KNOCKOUT_DISPLAY_MS + 300;
+const VICTORY_AFTER_KNOCKOUT_MS = 1200;
+const VICTORY_SCREEN_DELAY_MS = RESULT_SHOW_DELAY_MS + RESULT_DISPLAY_MS + VICTORY_AFTER_KNOCKOUT_MS;
 const CARD_ACTION_DISPLAY_MS = 2100;
 const CONTROLLED_CARD_ACTION_DISPLAY_MS = 3600;
 const DEFENSE_REVEAL_INTERVAL_MS = 400;
+const HAND_DESTROY_UNKNOWN_MS = 800;
+const HAND_DESTROY_REVEAL_MS = 1600;
+const HAND_DESTROY_SHATTER_MS = 950;
+const HAND_DESTROY_AFTER_SHATTER_MS = 1700;
 const ATTACK_DISPLAY_AFTER_RESULT_DELAY_MS = 300;
 const CARD_DRAW_SOUND_GAP_MS = 200;
 const HAND_CARD_FEED_IN_GAP_MS = 200;
@@ -241,7 +279,7 @@ let freshHandIndexesGlobal = {
     player2: new Set()
 };
 
-const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake", "choubo"]);
+const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake", "choubo", TIME_CARD_KEY, RELAY_CARD_KEY]);
 
 const player1Div = document.querySelector(".player1");
 const player2Div = document.querySelector(".player2");
@@ -417,11 +455,16 @@ function getTutorialContent() {
         playerElement = getPlayerElementByRole(getControlledSelfAttackRole() || myPlayerRole);
     }
     if (tutorialMode === "attack-select") {
+        const firstAttackIndex = getTutorialHand().findIndex(cardKey => {
+            const card = CARDS[cardKey];
+            return card?.type === "attack" && Number(card.value) > 0;
+        });
+        const firstAttackCard = handElement?.querySelector(`[data-hand-index="${firstAttackIndex}"]`);
         return {
             label: "攻撃ガイド",
             title: "攻撃カードを選ぼう",
             message: "最初は「攻」と書かれたカードを1枚押して、相手を攻撃してみましょう。",
-            target: handElement
+            target: firstAttackCard || handElement?.querySelector(".hand-card") || handElement
         };
     }
     if (tutorialMode === "boost-select") {
@@ -495,15 +538,50 @@ function getTutorialContent() {
     };
 }
 
+function isUsableTutorialRect(rect) {
+    return rect && rect.width >= 8 && rect.height >= 8;
+}
+
+function getFallbackTutorialElements(target) {
+    if (!(target instanceof Element)) return [];
+    return [
+        ...target.querySelectorAll(
+            ".tutorial-defense-bright, .defense-selected, .hand-card:not(:disabled), .hand-card, .selected-card-info, .defense-confirm-display, .attack-total-display, .attack-card-display"
+        )
+    ];
+}
+
+function getTutorialTargetRects(content, target) {
+    const explicitTargets = Array.isArray(content.targets) ? content.targets.filter(Boolean) : [];
+    let elements = explicitTargets.length > 0 ? explicitTargets : [target].filter(Boolean);
+    let rects = elements
+        .map(element => element.getBoundingClientRect?.())
+        .filter(isUsableTutorialRect);
+
+    if (rects.length === 0) {
+        const fallbackElements = elements.flatMap(getFallbackTutorialElements);
+        rects = fallbackElements
+            .map(element => element.getBoundingClientRect())
+            .filter(isUsableTutorialRect);
+    }
+
+    return rects;
+}
+
 function positionTutorial() {
     if (!isTutorialActive || !gameScreenDiv || !tutorialSpotlight || !tutorialPanel) return;
 
     const content = getTutorialContent();
     const target = content.target || gameScreenDiv;
     const screenRect = gameScreenDiv.getBoundingClientRect();
-    const targetRects = Array.isArray(content.targets) && content.targets.length > 0
-        ? content.targets.map(element => element.getBoundingClientRect())
-        : [target.getBoundingClientRect()];
+    const targetRects = getTutorialTargetRects(content, target);
+    if (targetRects.length === 0) {
+        tutorialSpotlight.style.display = "none";
+        tutorialPanel.style.left = `${Math.max(10, (screenRect.width - (tutorialPanel.offsetWidth || 320)) / 2)}px`;
+        tutorialPanel.style.top = `${Math.max(10, (screenRect.height - (tutorialPanel.offsetHeight || 180)) / 2)}px`;
+        return;
+    }
+    tutorialSpotlight.style.display = "";
     const targetRect = targetRects.reduce((bounds, rect) => ({
         left: Math.min(bounds.left, rect.left),
         top: Math.min(bounds.top, rect.top),
@@ -921,6 +999,7 @@ function clearDisplayElements(selector, divs = getPlayerDisplayDivs()) {
 
 function clearCardActionDisplays() {
     clearDisplayElements(CARD_ACTION_DISPLAY_SELECTOR);
+    battleSelectDiv?.classList.remove("self-attack-mode", "heal-mode", "heal-player1", "heal-player2");
 }
 
 function getWinnerFromHp(player1Hp, player2Hp) {
@@ -938,6 +1017,10 @@ function showVictoryScreen(winnerRole) {
     stopTimer();
     endGame();
     clearCardActionDisplays();
+    [player1Div, player2Div].forEach(div => {
+        div?.classList.remove("player-result-active");
+        div?.querySelectorAll(".damage-result-display").forEach(el => el.remove());
+    });
 
     if (!winnerRole) {
         victoryTitle.textContent = "試合終了";
@@ -958,7 +1041,7 @@ function showVictoryScreen(winnerRole) {
     victoryScreen.style.display = "flex";
 }
 
-function scheduleVictoryScreen(winnerRole, key = "") {
+function scheduleVictoryScreen(winnerRole, key = "", delayMs = VICTORY_SCREEN_DELAY_MS) {
     const nextKey = `${key}:${winnerRole || "none"}`;
     if (scheduledVictoryKey === nextKey && victoryScreen?.style.display === "flex") return;
     if (scheduledVictoryKey === nextKey && scheduledVictoryTimer) return;
@@ -967,7 +1050,7 @@ function scheduleVictoryScreen(winnerRole, key = "") {
     scheduledVictoryTimer = setTimeout(() => {
         scheduledVictoryTimer = null;
         showVictoryScreen(winnerRole);
-    }, VICTORY_SCREEN_DELAY_MS);
+    }, delayMs);
 }
 
 function hideVictoryScreen() {
@@ -1040,6 +1123,22 @@ function updateSelfAttackNameDisplay(attackerRole, targetRole, isSelfAttack) {
     fitPlayerNameDisplay();
 }
 
+function getDisplayedPlayerOrder() {
+    if (battleSelectDiv?.classList.contains("attacker-player2")) {
+        return ["player2", "player1"];
+    }
+    return ["player1", "player2"];
+}
+
+function getAttackArrowText(attackerRole, targetRole, isSelfAttack) {
+    if (isSelfAttack) return "→";
+    const order = getDisplayedPlayerOrder();
+    const attackerIndex = order.indexOf(attackerRole);
+    const targetIndex = order.indexOf(targetRole);
+    if (attackerIndex === -1 || targetIndex === -1) return "→";
+    return attackerIndex < targetIndex ? "→" : "←";
+}
+
 function resetPlayerNames() {
     playerNames = { ...DEFAULT_PLAYER_NAMES };
     updatePlayerNameDisplay();
@@ -1106,20 +1205,44 @@ function receiveHandEffect(effect) {
     }
     if (effect.id === lastRenderedHandEffectId) return;
 
-    activeHandDestroyEffect = effect;
+    const totalDisplayMs = HAND_DESTROY_UNKNOWN_MS
+        + HAND_DESTROY_REVEAL_MS
+        + HAND_DESTROY_SHATTER_MS
+        + HAND_DESTROY_AFTER_SHATTER_MS;
+
+    activeHandDestroyEffect = { ...effect, phase: "unknown" };
     lastRenderedHandEffectId = effect.id;
-    renderDestroyedHandCardDisplay(effect);
+    renderDestroyedHandCardDisplay(activeHandDestroyEffect);
+    renderHands();
+
+    setTimeout(() => {
+        if (activeHandDestroyEffect?.id === effect.id) {
+            activeHandDestroyEffect = { ...effect, phase: "reveal" };
+            renderDestroyedHandCardDisplay(activeHandDestroyEffect);
+            renderHands();
+        }
+    }, HAND_DESTROY_UNKNOWN_MS);
+
+    setTimeout(() => {
+        if (activeHandDestroyEffect?.id === effect.id) {
+            activeHandDestroyEffect = { ...effect, phase: "shatter" };
+            renderDestroyedHandCardDisplay(activeHandDestroyEffect);
+            renderHands();
+        }
+    }, HAND_DESTROY_UNKNOWN_MS + HAND_DESTROY_REVEAL_MS);
+
     setTimeout(() => {
         if (activeHandDestroyEffect?.id === effect.id) {
             activeHandDestroyEffect = null;
             renderHands();
         }
-    }, 850);
+    }, totalDisplayMs);
+
     setTimeout(() => {
         if (lastRenderedHandEffectId === effect.id) {
             update(gameRoomRef, { hand_effect: null });
         }
-    }, 2800);
+    }, totalDisplayMs + 300);
 }
 
 function renderDestroyedHandCardDisplay(effect) {
@@ -1132,6 +1255,7 @@ function renderDestroyedHandCardDisplay(effect) {
     const targetDiv = effect.target === "player1" ? player1Div : player2Div;
     if (!targetDiv) return;
 
+    const phase = effect.phase || "shatter";
     const card = {
         name: effect.name || "",
         imgSrc: effect.imgSrc || "",
@@ -1145,23 +1269,34 @@ function renderDestroyedHandCardDisplay(effect) {
         ? `攻 ${card.value}`
         : card.type === "heal"
             ? `回 ${card.value}`
-            : card.type === "defense"
+                : card.type === "defense"
                 ? getDefenseCardLabel(card)
                 : "";
 
     const dispDiv = document.createElement("div");
-    dispDiv.className = "destroyed-card-display shatter-info-display";
-    dispDiv.innerHTML = `
-        <div class="destroyed-card-heading">文字化けファイルで消えたカード</div>
-        ${renderCardInfoBlock(card, label)}
-    `;
+    dispDiv.className = `destroyed-card-display destroy-phase-${phase}${phase === "shatter" ? " shatter-info-display" : ""}`;
+    dispDiv.innerHTML = phase === "unknown"
+        ? renderUnknownDestroyedCardInfoBlock()
+        : renderCardInfoBlock(card, label);
     targetDiv.appendChild(dispDiv);
 
     setTimeout(() => {
-        if (lastRenderedHandEffectId === effect.id) {
+        if (lastRenderedHandEffectId === effect.id && phase === "shatter") {
             dispDiv.remove();
         }
-    }, 3000);
+    }, HAND_DESTROY_SHATTER_MS + HAND_DESTROY_AFTER_SHATTER_MS);
+}
+
+function renderUnknownDestroyedCardInfoBlock() {
+    return `
+        <div class="card-info-panel destroyed-unknown-card-info">
+            <div class="card-info-image destroyed-unknown-image" aria-hidden="true">?</div>
+            <div class="card-info-body">
+                <div class="card-info-name"><span class="card-info-name-text">？？？</span></div>
+                <div class="card-info-effect">解析中...</div>
+            </div>
+        </div>
+    `;
 }
 
 function getHandByRole(role) {
@@ -1275,6 +1410,7 @@ function getCardActionLabel(card) {
     if (card === CARDS.enadori) return BOOST_LABEL;
     if (card.type === "attack") return `攻 ${card.value}`;
     if (card.type === "heal") return `回 ${card.value}`;
+    if (card.type === "mpheal") return `MP ${card.value}`;
     if (card.type === "defense") return getDefenseCardLabel(card);
     return "";
 }
@@ -1312,7 +1448,7 @@ function makeRandomPendingSelectedCard(player) {
 
 function canUseCardByControlledRandom(cardKey, card) {
     if (!card || cardKey === MAGIC_CARD_KEY || cardKey === "hacking") return false;
-    return card.type === "attack" || card.type === "heal" || card.type === "defense";
+    return card.type === "attack" || card.type === "heal" || card.type === "mpheal" || card.type === "defense";
 }
 
 function getControlledActionCandidates(role) {
@@ -1378,6 +1514,18 @@ function applyControlledHeal(card, targetRole) {
         player: targetRole,
         type: "heal",
         amount: healedHp - beforeHp
+    };
+}
+
+function applyControlledMpHeal(card, targetRole) {
+    const beforeMp = getRoleMp(targetRole);
+    const recoveredMp = Math.min(99, beforeMp + card.value);
+    setRoleMp(targetRole, recoveredMp);
+    return {
+        id: Date.now(),
+        player: targetRole,
+        type: "mpheal",
+        amount: recoveredMp - beforeMp
     };
 }
 
@@ -1455,6 +1603,10 @@ function executeControlledRandomAction() {
                 const targetRole = getRandomPlayerRole();
                 if (usedCardInfo) usedCardInfo.target = targetRole;
                 actionResult = applyControlledHeal(randomCard, targetRole);
+            } else if (randomCard.type === "mpheal") {
+                const targetRole = getRandomPlayerRole();
+                if (usedCardInfo) usedCardInfo.target = targetRole;
+                actionResult = applyControlledMpHeal(randomCard, targetRole);
             } else if (randomCard.type === "defense") {
                 if (usedCardInfo) usedCardInfo.target = actorRole;
                 setRoleDefense(actorRole, 0);
@@ -1515,14 +1667,23 @@ function maybeRunControlledRound() {
     }, CONTROLLED_ROUND_DELAY_MS);
 }
 
+function getEffectiveDefenseValue(card, attackCard = currentAttackCardGlobal) {
+    if (!card) return 0;
+    if (attackCard?.element === "material" && Number(card.materialDefenseValue) > 0) {
+        return Number(card.materialDefenseValue);
+    }
+    return Number(card.value) || 0;
+}
+
 function syncSelectedDefenseState(role) {
     const cards = selectedDefenseCards[role] || [];
-    defenseCardsGlobal[role] = cards.map(({ cardKey, name, type, imgSrc, value, reductionRate, reflectAttack, blocksElement, blocksElements, description }) => ({
+    defenseCardsGlobal[role] = cards.map(({ cardKey, name, type, imgSrc, value, materialDefenseValue, reductionRate, reflectAttack, blocksElement, blocksElements, description }) => ({
         cardKey: cardKey || "",
         name: name || "",
         type: type || "defense",
         imgSrc: imgSrc || "",
         value: Number(value) || 0,
+        materialDefenseValue: Number(materialDefenseValue) || 0,
         reductionRate: Number(reductionRate) || 0,
         reflectAttack: Boolean(reflectAttack),
         blocksElement: blocksElement || null,
@@ -1531,7 +1692,7 @@ function syncSelectedDefenseState(role) {
     }));
 
     if (role === myPlayerRole) {
-        mydefense = cards.reduce((sum, card) => sum + card.value, 0);
+        mydefense = cards.reduce((sum, card) => sum + getEffectiveDefenseValue(card), 0);
     }
 }
 
@@ -1562,7 +1723,11 @@ function canSelectDefenseCard(role, card, handIndex) {
 }
 
 function getDefenseCardBattleLabel(card, attackValue = pendingAttackGlobal) {
-    if (!card?.reductionRate || attackValue <= 0) return getDefenseCardLabel(card);
+    if (!card?.reductionRate || attackValue <= 0) {
+        if (card?.reflectAttack) return "反射";
+        const effectiveValue = getEffectiveDefenseValue(card);
+        return effectiveValue > 0 ? `守 ${effectiveValue}` : getDefenseCardLabel(card);
+    }
     const remainingDamage = Math.ceil(attackValue * (1 - card.reductionRate));
     const effectiveDefense = Math.max(0, attackValue - remainingDamage);
     return `${Math.round(card.reductionRate * 100)}%減（守 ${effectiveDefense}）`;
@@ -1575,6 +1740,7 @@ function makeDefenseRevealCards(role, attackValue = pendingAttackGlobal) {
         type: card.type || "defense",
         imgSrc: card.imgSrc || "",
         value: Number(card.value) || 0,
+        materialDefenseValue: Number(card.materialDefenseValue) || 0,
         reductionRate: Number(card.reductionRate) || 0,
         reflectAttack: Boolean(card.reflectAttack),
         blocksElement: card.blocksElement || null,
@@ -1593,7 +1759,7 @@ function getDefenseSummary(role) {
         1
     );
     const reductionPercent = Math.round((1 - remainingMultiplier) * 100);
-    const flatDefense = cards.reduce((sum, card) => sum + (card.value || 0), 0);
+    const flatDefense = cards.reduce((sum, card) => sum + getEffectiveDefenseValue(card), 0);
     return { remainingMultiplier, reductionPercent, flatDefense };
 }
 
@@ -1691,6 +1857,7 @@ function tryReflectPendingAttack(role) {
         reflectionFrom: reflectedTarget,
         reflectionId: Date.now(),
         reflectionDepth: (incomingAttack.reflectionDepth || 0) + 1,
+        relayRepeat: 0,
         afterTurn: role
     };
     const reflectionResult = {
@@ -1737,7 +1904,36 @@ function getSelectedCardKey() {
 function canApplyAttackBoost(cardKey, card = CARDS[cardKey]) {
     if (!card || card.type !== "attack" || card.value <= 0) return false;
     if (card.hitRate !== undefined) return false;
+    if (card.element === "material") return false;
     return cardKey !== "hacking" && cardKey !== "mojibake";
+}
+
+function isNormalActionCard(cardKey, card = CARDS[cardKey]) {
+    return !!card && cardKey !== MAGIC_CARD_KEY && cardKey !== TIME_CARD_KEY && cardKey !== RELAY_CARD_KEY
+        && cardKey !== "hacking" && cardKey !== "mojibake"
+        && (card.type === "attack" || card.type === "heal" || card.type === "mpheal" || card.type === "defense");
+}
+
+function canApplyExtraTurn(cardKey, card = CARDS[cardKey]) {
+    return isNormalActionCard(cardKey, card);
+}
+
+function canApplyRepeatAttack(cardKey, card = CARDS[cardKey]) {
+    return !!card && card.type === "attack" && card.value > 0 && cardKey !== "hacking" && cardKey !== "mojibake";
+}
+
+function canSelectHandComboCard(comboCardKey, selectedCardKey, selectedCard = CARDS[selectedCardKey]) {
+    if (comboCardKey === MAGIC_CARD_KEY) return canApplyAttackBoost(selectedCardKey, selectedCard);
+    if (comboCardKey === TIME_CARD_KEY) return canApplyExtraTurn(selectedCardKey, selectedCard);
+    if (comboCardKey === RELAY_CARD_KEY) return canApplyRepeatAttack(selectedCardKey, selectedCard);
+    return false;
+}
+
+function getComboCardLabel(cardKey, card = CARDS[cardKey]) {
+    if (cardKey === MAGIC_CARD_KEY) return BOOST_LABEL;
+    if (cardKey === TIME_CARD_KEY) return "再行動";
+    if (cardKey === RELAY_CARD_KEY) return "2連続";
+    return getDisplayCardLabel(card);
 }
 
 function getCurrentPlayerHand() {
@@ -1750,14 +1946,21 @@ const BOOST_LABEL = "&times;2";
 function getDisplayCardLabel(card) {
     if (!card) return "";
     if (card === CARDS.enadori) return `${BOOST_LABEL} / ${card.mpCost}MP`;
+    if (card === CARDS.timecard) return "再行動";
+    if (card === CARDS.relay) return "2連続";
     if (card.type === "attack") return `攻 ${card.value}`;
     if (card.type === "heal") return `回 ${card.value}`;
+    if (card.type === "mpheal") return `MP ${card.value}`;
     if (card.type === "defense") return getDefenseCardLabel(card);
     if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
     return "";
 }
 
 function getSelectedBoostEntries() {
+    return getSelectedComboEntries().filter(entry => entry.cardKey === BOOST_CARD_KEY);
+}
+
+function getSelectedComboEntries() {
     const magicHand = getMagicHandByRole(myPlayerRole);
     const hand = getHandByRole(myPlayerRole);
     const unlockedEntries = selectedBoostCardIndexes.map(handIndex => ({
@@ -1773,13 +1976,13 @@ function getSelectedBoostEntries() {
         card: CARDS[hand[handIndex]]
     }));
     return [...unlockedEntries, ...handEntries]
-        .filter(entry => entry.cardKey === BOOST_CARD_KEY && entry.card);
+        .filter(entry => entry.card);
 }
 
 function makeBoostCardInfo(entry) {
     return {
         name: entry.card.name,
-        label: BOOST_LABEL,
+        label: getComboCardLabel(entry.cardKey, entry.card),
         description: entry.card.description,
         imgSrc: entry.card.imgSrc
     };
@@ -1864,6 +2067,7 @@ function renderSelectedCardInfoV2() {
     const card = CARDS[cardKey];
     if (!card) return;
 
+    const comboEntries = getSelectedComboEntries();
     const boostEntries = getSelectedBoostEntries();
     const targetDiv = (myPlayerRole === "player1") ? player1Div : player2Div;
     if (!targetDiv) return;
@@ -1881,8 +2085,8 @@ function renderSelectedCardInfoV2() {
     infoDiv.innerHTML = `
         <div>
             ${isSelfAttack ? `<div class="self-attack-badge">自分に攻撃</div>` : ""}
-            ${renderCardInfoBlock(card, label)}
-            ${boostEntries.map(entry => renderCardInfoBlock(entry.card, BOOST_LABEL, 34)).join("")}
+            ${renderCardInfoBlock(card, label, 40, true)}
+            ${comboEntries.map(entry => renderCardInfoBlock(entry.card, getComboCardLabel(entry.cardKey, entry.card), 34, true)).join("")}
         </div>
     `;
 
@@ -1903,7 +2107,7 @@ function renderSelectedCardInfoV2() {
             description: card.description,
             imgSrc: card.imgSrc,
             target: selectedAttackTargetRole,
-            boosts: boostEntries.map(makeBoostCardInfo)
+            boosts: comboEntries.map(makeBoostCardInfo)
         }
     });
 }
@@ -1912,18 +2116,20 @@ function setAttackTarget(role) {
     if (!gameStartedGlobal) return;
     if (pendingAttackGlobal > 0) return;
     const selectedCard = getSelectedCard();
-    const isAttackCard = selectedCard?.type === "attack";
+    const actionType = selectedCard?.type || "";
+    const isAttackCard = actionType === "attack";
     if (selectedCard?.type === "attack") {
         role = getOpponentRole(myPlayerRole);
-    } else if (selectedCard?.type === "heal") {
+    } else if (["heal", "mpheal", "defense", "special"].includes(selectedCard?.type)) {
         role = myPlayerRole;
     }
     selectedAttackTargetRole = role;
-    updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole, isAttackCard);
+    updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole, isAttackCard, { actionType });
 }
 
 function updateAttackTargetDisplay(attackerRole = myPlayerRole, targetRole = selectedAttackTargetRole, isAttackTarget = true, options = {}) {
-    const isSelfAttack = !!isAttackTarget && !!attackerRole && !!targetRole && attackerRole === targetRole;
+    const isSupportAction = ["heal", "mpheal", "defense", "special"].includes(options.actionType);
+    const isSelfAttack = !isSupportAction && !!isAttackTarget && !!attackerRole && !!targetRole && attackerRole === targetRole;
     status1Div?.classList.toggle("attack-target-selected", isAttackTarget && targetRole === "player1");
     status2Div?.classList.toggle("attack-target-selected", isAttackTarget && targetRole === "player2");
     status1Div?.classList.toggle("self-attack-target", isSelfAttack && targetRole === "player1");
@@ -1933,6 +2139,13 @@ function updateAttackTargetDisplay(attackerRole = myPlayerRole, targetRole = sel
     player1Div?.classList.toggle("self-attack-mirror-player", isSelfAttack && attackerRole === "player2");
     player2Div?.classList.toggle("self-attack-mirror-player", isSelfAttack && attackerRole === "player1");
     battleSelectDiv?.classList.toggle("self-attack-mode", isSelfAttack);
+    battleSelectDiv?.classList.toggle("heal-mode", isSupportAction);
+    battleSelectDiv?.classList.toggle("heal-player1", isSupportAction && attackerRole === "player1");
+    battleSelectDiv?.classList.toggle("heal-player2", isSupportAction && attackerRole === "player2");
+    if (isSupportAction) {
+        const opponentDiv = getPlayerElementByRole(getOpponentRole(attackerRole));
+        if (opponentDiv) clearDisplayElements(CARD_ACTION_DISPLAY_SELECTOR, [opponentDiv]);
+    }
     if (!options.preserveOrder) {
         updateAttackerDisplayOrder(attackerRole);
     }
@@ -1944,12 +2157,18 @@ function updateAttackTargetDisplay(attackerRole = myPlayerRole, targetRole = sel
     attackArrowDiv.removeAttribute("aria-label");
 
     if (isSelfAttack) {
-        attackArrowDiv.textContent = "→";
+        attackArrowDiv.textContent = getAttackArrowText(attackerRole, targetRole, isSelfAttack);
         attackArrowDiv.classList.add("arrow-self");
         attackArrowDiv.setAttribute("aria-label", "自分に攻撃");
+    } else if (isSupportAction) {
+        attackArrowDiv.textContent = "←";
+        attackArrowDiv.classList.add("arrow-up");
+        attackArrowDiv.setAttribute("aria-label", `${getPlayerDisplayName(attackerRole)}に使用`);
     } else {
-        attackArrowDiv.textContent = "→";
-        attackArrowDiv.classList.add("arrow-down");
+        const arrowText = getAttackArrowText(attackerRole, targetRole, isSelfAttack);
+        attackArrowDiv.textContent = arrowText;
+        attackArrowDiv.classList.add(arrowText === "←" ? "arrow-up" : "arrow-down");
+        attackArrowDiv.setAttribute("aria-label", `${getPlayerDisplayName(attackerRole)}から${getPlayerDisplayName(targetRole)}へ攻撃`);
     }
 }
 
@@ -2033,9 +2252,11 @@ window.selectCard = function(handIndex) {
 
     const cardKey = (myPlayerRole === "player1") ? myHand[handIndex] : tekiHand[handIndex];
     const card = CARDS[cardKey];
+    const comboEntriesForAction = getSelectedComboEntries();
+    const usesTimeCardForAction = comboEntriesForAction.some(entry => entry.cardKey === TIME_CARD_KEY);
     if (!card || shouldTutorialDisableCard(cardKey, card, handIndex)) return;
 
-    if (cardKey === MAGIC_CARD_KEY) {
+    if (cardKey === MAGIC_CARD_KEY || cardKey === TIME_CARD_KEY || cardKey === RELAY_CARD_KEY) {
         selectHandMagicCard(handIndex);
         return;
     }
@@ -2053,7 +2274,7 @@ window.selectCard = function(handIndex) {
     selectedHandMagicCardIndexes = [];
     if (card.type === "attack") {
         setAttackTarget(getOpponentRole(myPlayerRole));
-    } else if (card.type === "heal") {
+    } else if (card.type === "heal" || card.type === "mpheal") {
         setAttackTarget(myPlayerRole);
     } else {
         setAttackTarget(getOpponentRole(myPlayerRole));
@@ -2106,15 +2327,18 @@ window.selectCard = function(handIndex) {
 function selectHandMagicCard(handIndex) {
     if (pendingAttackGlobal > 0) return;
     const hand = getCurrentPlayerHand();
+    const cardKey = hand[handIndex];
     const card = CARDS[hand[handIndex]];
     const selectedCard = getSelectedCard();
     const selectedCardKey = getSelectedCardKey();
-    if (!card || hand[handIndex] !== MAGIC_CARD_KEY || !canApplyAttackBoost(selectedCardKey, selectedCard)) return;
+    if (!card || !canSelectHandComboCard(cardKey, selectedCardKey, selectedCard)) return;
 
     const isSelected = selectedHandMagicCardIndexes.includes(handIndex);
-    const selectedCount = selectedBoostCardIndexes.length + selectedHandMagicCardIndexes.length;
-    const nextSelectedCount = isSelected ? selectedCount - 1 : selectedCount + 1;
-    if (!isSelected && mycurrentmp < nextSelectedCount * card.mpCost) return;
+    if (cardKey === MAGIC_CARD_KEY) {
+        const selectedEnadoriCount = getSelectedBoostEntries().length;
+        const nextSelectedCount = isSelected ? selectedEnadoriCount - 1 : selectedEnadoriCount + 1;
+        if (!isSelected && mycurrentmp < nextSelectedCount * card.mpCost) return;
+    }
 
     playSound(SELECT_SOUND_SRC, 0, 0.75);
     if (isSelected) {
@@ -2124,7 +2348,7 @@ function selectHandMagicCard(handIndex) {
     }
     renderSelectedCardInfoV2();
     renderHands();
-    handleTutorialCardSelection(MAGIC_CARD_KEY, card);
+    handleTutorialCardSelection(cardKey, card);
 }
 
 window.selectMagicCard = function(magicIndex) {
@@ -2168,6 +2392,7 @@ function useDefenseCardDuringAttack(handIndex, card) {
             type: card.type,
             imgSrc: card.imgSrc,
             value: card.value,
+            materialDefenseValue: card.materialDefenseValue,
             reductionRate: card.reductionRate,
             reflectAttack: card.reflectAttack,
             blocksElement: card.blocksElement,
@@ -2200,7 +2425,7 @@ function renderDefenseCardDisplay(player, targetDiv) {
     cards.forEach(card => {
         const dispDiv = document.createElement("div");
         dispDiv.className = "defense-card-display";
-        dispDiv.innerHTML = renderCardInfoBlock(card, getDefenseCardBattleLabel(card));
+        dispDiv.innerHTML = renderCardInfoBlock(card, getDefenseCardBattleLabel(card), 40, true);
         listDiv.appendChild(dispDiv);
     });
     targetDiv.appendChild(listDiv);
@@ -2222,7 +2447,7 @@ function renderRevealedDefenseSequence(targetDiv, cards = []) {
             if (!listDiv.isConnected) return;
             const dispDiv = document.createElement("div");
             dispDiv.className = "defense-card-display revealed-defense-card";
-            dispDiv.innerHTML = renderCardInfoBlock(card, card.battleLabel || getDefenseCardBattleLabel(card));
+            dispDiv.innerHTML = renderCardInfoBlock(card, card.battleLabel || getDefenseCardBattleLabel(card), 40, true);
             listDiv.appendChild(dispDiv);
         }, index * DEFENSE_REVEAL_INTERVAL_MS);
     });
@@ -2234,7 +2459,7 @@ function renderDamageResultDisplay(result) {
     if (!result || !result.player) return;
     if (result.id && result.id === lastRenderedDamageResultId) return;
 
-    [player1Div, player2Div].forEach(div => {
+    [player1Div, player2Div, gameScreenDiv].forEach(div => {
         div?.querySelectorAll(".damage-result-display").forEach(el => el.remove());
     });
 
@@ -2244,16 +2469,17 @@ function renderDamageResultDisplay(result) {
     const dispDiv = document.createElement("div");
     dispDiv.className = "damage-result-display";
     const isHeal = result.type === "heal";
-    const isSafe = !isHeal && result.damage <= 0;
-    const text = isHeal ? `+${result.amount}HP` : (isSafe ? "無事" : `${result.damage}ダメージ`);
-    const color = isHeal ? "#008f6f" : (isSafe ? "#008f6f" : "#d03030");
-    const bg = isHeal || isSafe ? "rgba(225,255,240,0.95)" : "rgba(255,230,230,0.95)";
+    const isMpHeal = result.type === "mpheal";
+    const isSafe = !isHeal && !isMpHeal && result.damage <= 0;
+    const text = isHeal ? `+${result.amount}HP` : (isMpHeal ? `+${result.amount}MP` : (isSafe ? "無事" : `${result.damage}ダメージ`));
+    const color = isHeal || isMpHeal ? "#008f6f" : (isSafe ? "#008f6f" : "#d03030");
+    const bg = isHeal || isMpHeal || isSafe ? "rgba(225,255,240,0.95)" : "rgba(255,230,230,0.95)";
     dispDiv.innerHTML = `
         <div style="border: 2px solid ${color}; padding: 6px; margin-top: 10px; background: ${bg}; border-radius: 5px; text-align: center;">
             <span style="font-size: 16px; font-weight: bold; color: ${color};">${text}</span>
         </div>
     `;
-    targetDiv.appendChild(dispDiv);
+    placeDamageResultDisplay(targetDiv, dispDiv);
     const renderedResultId = result.id || Date.now();
     lastRenderedDamageResultId = renderedResultId;
     setTimeout(() => {
@@ -2264,11 +2490,17 @@ function renderDamageResultDisplay(result) {
     }, RESULT_DISPLAY_MS);
 }
 
+function placeDamageResultDisplay(targetDiv, dispDiv) {
+    if (!targetDiv || !dispDiv) return;
+
+    targetDiv.appendChild(dispDiv);
+}
+
 function renderResultPanelDisplay(result) {
     if (!result || !result.player) {
         clearTimeout(resultDisplayTimer);
         resultDisplayTimer = null;
-        [player1Div, player2Div].forEach(div => {
+        [player1Div, player2Div, gameScreenDiv].forEach(div => {
             div?.classList.remove("player-result-active");
             div?.querySelectorAll(".damage-result-display").forEach(el => el.remove());
         });
@@ -2277,7 +2509,7 @@ function renderResultPanelDisplay(result) {
     if (result.id && result.id === lastRenderedDamageResultId) return;
 
     clearTimeout(resultDisplayTimer);
-    [player1Div, player2Div].forEach(div => {
+    [player1Div, player2Div, gameScreenDiv].forEach(div => {
         div?.classList.remove("player-result-active");
         div?.querySelectorAll(".damage-result-display").forEach(el => el.remove());
     });
@@ -2292,7 +2524,8 @@ function renderResultPanelDisplay(result) {
         if (!targetDiv) return;
 
         const isHeal = result.type === "heal";
-        const isSafe = !isHeal && result.damage <= 0;
+        const isMpHeal = result.type === "mpheal";
+        const isSafe = !isHeal && !isMpHeal && result.damage <= 0;
         const isReflection = result.type === "reflect" || result.message === "反射";
         const isKnockout = result.knockout || result.message === "撃沈";
         if (isReflection) {
@@ -2305,18 +2538,12 @@ function renderResultPanelDisplay(result) {
             return;
         }
 
-        targetDiv.querySelectorAll(CARD_ACTION_DISPLAY_SELECTOR).forEach(el => {
-            if (!el.classList.contains("revealed-defense-sequence")
-                && !el.classList.contains("revealed-defense-card")) {
-                el.remove();
-            }
-        });
         targetDiv.classList.add("player-result-active");
 
         const messageText = result.message && result.message !== "即死" && !isKnockout ? result.message : "";
-        const valueText = messageText || (isHeal ? `+${result.amount}` : (isSafe ? "無事" : result.damage));
-        const labelText = messageText ? "" : (isHeal ? "HP回復" : (isSafe ? "" : "ダメージ"));
-        const typeClass = isHeal
+        const valueText = messageText || (isHeal || isMpHeal ? `+${result.amount}` : (isSafe ? "無事" : result.damage));
+        const labelText = messageText ? "" : (isHeal ? "HP回復" : (isMpHeal ? "MP回復" : (isSafe ? "" : "ダメージ")));
+        const typeClass = isHeal || isMpHeal
             ? "heal-result"
             : (isReflection || isSafe ? "safe-result" : (result.instantDeath ? "instant-death-result" : "damage-result"));
 
@@ -2328,8 +2555,8 @@ function renderResultPanelDisplay(result) {
                 ${labelText ? `<div class="result-label">${labelText}</div>` : ""}
             </div>
         `;
-        targetDiv.appendChild(dispDiv);
-        if (!isHeal && Number(result.damage) > 0) {
+        placeDamageResultDisplay(targetDiv, dispDiv);
+        if (!isHeal && !isMpHeal && Number(result.damage) > 0) {
             playSound(PUNCH_SOUND_SRC, 0, 0.85);
         }
         setTimeout(() => {
@@ -2416,6 +2643,7 @@ window.executeCard = function() {
         reserveDrawForCurrentPlayer(usedDefenseCount);
         const damageResult = makeDamageResult(myPlayerRole, finalDamage, currentAttackCardGlobal, hpBeforeDamage);
         damageResult.usedDefenseCards = revealedDefenseCards;
+        const resolvedAttackCard = currentAttackCardGlobal ? { ...currentAttackCardGlobal } : null;
         const nextTurnAfterDefense = currentAttackCardGlobal?.afterTurn || myPlayerRole;
         pendingAttackGlobal = 0;
         currentAttackCardGlobal = null;
@@ -2434,6 +2662,13 @@ window.executeCard = function() {
         if (mycurrenthp <= 0) {
             markKnockoutResult(damageResult);
             sendGameState("end", 0, null, logMsg, damageResult);
+        } else if ((resolvedAttackCard?.relayRepeat || 0) > 0) {
+            const repeatedAttackCard = {
+                ...resolvedAttackCard,
+                relayRepeat: Math.max(0, (resolvedAttackCard.relayRepeat || 0) - 1),
+                repeatId: Date.now()
+            };
+            sendGameState(myPlayerRole, repeatedAttackCard.value || 0, repeatedAttackCard, logMsg, damageResult);
         } else {
             sendGameState(nextTurnAfterDefense, 0, null, logMsg, damageResult);
         }
@@ -2454,9 +2689,12 @@ window.executeCard = function() {
         // 攻撃のときは手札だけ消費して、相手にターンを回しつつ、攻撃力をFirebaseにストックする
         const currentHand = getCurrentPlayerHand();
         const currentMagicHand = getMagicHandByRole(myPlayerRole);
+        const comboEntries = getSelectedComboEntries();
         const boostEntries = canApplyAttackBoost(cardKey, card) ? getSelectedBoostEntries() : [];
         const attackMultiplier = 2 ** boostEntries.length;
         const boostCard = boostEntries[0]?.card || null;
+        const usesTimeCard = comboEntries.some(entry => entry.cardKey === TIME_CARD_KEY);
+        const usesRelay = comboEntries.some(entry => entry.cardKey === RELAY_CARD_KEY);
         const boostedValue = card.value * attackMultiplier;
         const totalMpCost = boostEntries.reduce((sum, entry) => sum + (entry.card.mpCost || 0), 0);
         if (mycurrentmp < totalMpCost) {
@@ -2469,7 +2707,10 @@ window.executeCard = function() {
         }
         mycurrentmp -= totalMpCost;
         const newlyUnlockedMagic = boostEntries.filter(entry => entry.source === "hand");
-        const consumedHandIndexes = [handIndex, ...newlyUnlockedMagic.map(entry => entry.handIndex)]
+        const consumedComboHandIndexes = comboEntries
+            .filter(entry => entry.source === "hand" && entry.cardKey !== MAGIC_CARD_KEY)
+            .map(entry => entry.handIndex);
+        const consumedHandIndexes = [...new Set([handIndex, ...newlyUnlockedMagic.map(entry => entry.handIndex), ...consumedComboHandIndexes])]
             .sort((a, b) => b - a);
         consumedHandIndexes.forEach(index => currentHand.splice(index, 1));
         newlyUnlockedMagic.forEach(() => currentMagicHand.push(MAGIC_CARD_KEY));
@@ -2481,6 +2722,7 @@ window.executeCard = function() {
 
         // 攻撃カードは常に相手へ向ける
         const nextTurn = getOpponentRole(myPlayerRole);
+        const afterTurn = usesTimeCard ? myPlayerRole : nextTurn;
         selectedAttackTargetRole = nextTurn;
         updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
         defenseCardsGlobal = {
@@ -2517,11 +2759,13 @@ window.executeCard = function() {
             player: myPlayerRole,
             target: nextTurn,
             hit,
+            afterTurn,
+            relayRepeat: usesRelay ? 1 : 0,
             boostName: boostCard?.name || null,
             boostLabel: boostCard ? BOOST_LABEL : null,
             boostDescription: boostCard?.description || null,
             boostImgSrc: boostCard?.imgSrc || null,
-            boosts: boostEntries.map(makeBoostCardInfo)
+            boosts: comboEntries.map(makeBoostCardInfo)
         };
         if (card.hitRate !== undefined) {
             attackCardInfo.hitRate = card.hitRate;
@@ -2535,7 +2779,7 @@ window.executeCard = function() {
                 damage: 0,
                 message: "外れ"
             };
-            sendGameState(nextTurn, 0, null, "", missResult);
+            sendGameState(usesTimeCard ? myPlayerRole : nextTurn, 0, null, "", missResult);
         } else {
             sendGameState(nextTurn, boostedValue, attackCardInfo, "", null, handEffect);
         }
@@ -2562,6 +2806,26 @@ window.executeCard = function() {
         selectedAttackTargetRole = getOpponentRole(myPlayerRole);
         updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
         // addLog(`回復しました`);
+    } else if (card.type === "mpheal") {
+        const mpHealTargetRole = myPlayerRole;
+        const healingSelf = mpHealTargetRole === myPlayerRole;
+        const beforeMp = healingSelf ? mycurrentmp : tekicurrentmp;
+        const recoveredMp = Math.min(99, beforeMp + card.value);
+        if (healingSelf) {
+            mycurrentmp = recoveredMp;
+        } else {
+            tekicurrentmp = recoveredMp;
+        }
+        actionResult = {
+            id: Date.now(),
+            player: mpHealTargetRole,
+            type: "mpheal",
+            amount: recoveredMp - beforeMp
+        };
+        player1Mp.textContent = (myPlayerRole === "player1") ? mycurrentmp : tekicurrentmp;
+        player2Mp.textContent = (myPlayerRole === "player1") ? tekicurrentmp : mycurrentmp;
+        selectedAttackTargetRole = getOpponentRole(myPlayerRole);
+        updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
     } else if (card.type === "defense") {
         mydefense = 0;
         selectedDefenseCards[myPlayerRole] = [];
@@ -2597,18 +2861,21 @@ window.executeCard = function() {
     }
     
     // 通常の回復・防御カードの手札消費
-    if (myPlayerRole === "player1") {
-        myHand.splice(handIndex, 1);
-    } else {
-        tekiHand.splice(handIndex, 1);
-    }
-    reserveDrawForCurrentPlayer();
+    const currentHand = getCurrentPlayerHand();
+    const consumedHandIndexes = [...new Set([
+        handIndex,
+        ...comboEntriesForAction
+            .filter(entry => entry.source === "hand" && entry.cardKey === TIME_CARD_KEY)
+            .map(entry => entry.handIndex)
+    ])].sort((a, b) => b - a);
+    consumedHandIndexes.forEach(index => currentHand.splice(index, 1));
+    reserveDrawForCurrentPlayer(consumedHandIndexes.length);
     
 
     clearCardActionDisplays();
     renderHands();
     clearSelectedCardState();
-    sendGameState((myPlayerRole === "player1") ? "player2" : "player1", 0, null, "", actionResult);
+    sendGameState(usesTimeCardForAction ? myPlayerRole : getOpponentRole(myPlayerRole), 0, null, "", actionResult);
 }
 
 
@@ -2631,7 +2898,7 @@ function getHandSortGroup(cardKey, card) {
     if (card.type === "magic") return 5;
     if (card.type === "attack") return card.element ? 1 : 0;
     if (card.type === "defense") return 2;
-    if (card.type === "heal") return 3;
+    if (card.type === "heal" || card.type === "mpheal") return 3;
     return 4;
 }
 
@@ -2775,12 +3042,17 @@ function renderHands() {
     tekiHandDiv.innerHTML = "";
     myMagicHandDiv.innerHTML = "";
     tekiMagicHandDiv.innerHTML = "";
-    document.getElementById("my-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
-    document.getElementById("enemy-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
+    const myScreen = document.getElementById("my-screen");
+    const enemyScreen = document.getElementById("enemy-screen");
+    myScreen?.classList.remove("magic-row-attach");
+    enemyScreen?.classList.remove("magic-row-attach");
+    myScreen?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
+    enemyScreen?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
 
     const getLabel = (type, value, card = null) => {
         if (type === "attack") return `攻${value}`;
         if (type === "heal") return `回${value}`;
+        if (type === "mpheal") return `MP${value}`;
         if (type === "defense") return `守${value}`;
         if (type === "special" && card?.drawCards) return `+${card.drawCards}枚`;
         return value || "";
@@ -2805,6 +3077,7 @@ function renderHands() {
         }
         const destroyEffect = (activeHandDestroyEffect?.target === role) ? activeHandDestroyEffect : null;
         if (destroyEffect) {
+            const destroyPhase = destroyEffect.phase || "shatter";
             const destroyedCard = CARDS[destroyEffect.cardKey] || {
                 name: destroyEffect.name,
                 type: destroyEffect.cardType,
@@ -2812,14 +3085,24 @@ function renderHands() {
                 description: destroyEffect.description,
                 imgSrc: destroyEffect.imgSrc
             };
+            const displayDestroyedCard = destroyPhase === "unknown"
+                ? {
+                    name: "？？？",
+                    type: destroyedCard.type || "special",
+                    value: 0,
+                    description: "まだ何が壊れたかわからない",
+                    imgSrc: CARDS.mojibake.imgSrc
+                }
+                : destroyedCard;
             entries.splice(Math.min(destroyEffect.index, entries.length), 0, {
                 handIndex: `destroy-${destroyEffect.id}`,
                 cardKey: destroyEffect.cardKey,
-                card: destroyedCard,
-                destroyed: true
+                card: displayDestroyedCard,
+                destroyed: true,
+                destroyPhase
             });
         }
-        entries.forEach(({ handIndex, cardKey, card, destroyed }, displayIndex) => {
+        entries.forEach(({ handIndex, cardKey, card, destroyed, destroyPhase }, displayIndex) => {
             if (!card) return;
 
             const btn = document.createElement("button");
@@ -2834,7 +3117,7 @@ function renderHands() {
                 btn.classList.add("defense-selected");
             }
             const isHandMagicSelected = role === myPlayerRole
-                && cardKey === MAGIC_CARD_KEY
+                && (cardKey === MAGIC_CARD_KEY || cardKey === TIME_CARD_KEY || cardKey === RELAY_CARD_KEY)
                 && selectedHandMagicCardIndexes.includes(Number(handIndex));
             if (isHandMagicSelected) {
                 btn.classList.add("magic-selected");
@@ -2851,6 +3134,12 @@ function renderHands() {
                 }
             }
             if (destroyed) {
+                btn.classList.add(`destroy-phase-${destroyPhase || "shatter"}`);
+                if (destroyPhase === "unknown") {
+                    btn.classList.add("destroy-pending");
+                }
+            }
+            if (destroyed && destroyPhase === "shatter") {
                 btn.classList.add("shatter-out");
                 btn.disabled = true;
             }
@@ -2864,10 +3153,16 @@ function renderHands() {
             }
             //ここでいろいろいろいろ表示
             const hidesZeroAttackLabel = cardKey === "hacking" || cardKey === "mojibake";
-            const cardValueLabel = hidesZeroAttackLabel
+            const cardValueLabel = destroyed && destroyPhase === "unknown"
+                ? ""
+                : hidesZeroAttackLabel
                 ? ""
                 : cardKey === "enadori"
                 ? BOOST_LABEL
+                : cardKey === TIME_CARD_KEY
+                ? "再行動"
+                : cardKey === RELAY_CARD_KEY
+                ? "2連続"
                 : (card.type === "defense" && card.reflectAttack
                     ? "反射"
                 : (card.type === "defense" && card.reductionRate
@@ -2915,14 +3210,16 @@ function renderHands() {
             } else if (pendingAttackGlobal > 0) {
                 if (!canSelectCurrentDefense) btn.disabled = true;
             }
-            if (!destroyed && role === myPlayerRole && cardKey === MAGIC_CARD_KEY && pendingAttackGlobal === 0) {
+            if (!destroyed && role === myPlayerRole && (cardKey === MAGIC_CARD_KEY || cardKey === TIME_CARD_KEY || cardKey === RELAY_CARD_KEY) && pendingAttackGlobal === 0) {
                 const selectedCard = getSelectedCard();
                 const selectedCardKey = getSelectedCardKey();
-                const selectedCount = selectedBoostCardIndexes.length + selectedHandMagicCardIndexes.length;
-                const nextCost = (isHandMagicSelected ? selectedCount : selectedCount + 1) * card.mpCost;
+                const selectedEnadoriCount = getSelectedBoostEntries().length;
+                const nextCost = cardKey === MAGIC_CARD_KEY
+                    ? (isHandMagicSelected ? selectedEnadoriCount : selectedEnadoriCount + 1) * card.mpCost
+                    : 0;
                 btn.disabled = !(isMyTurnGlobal
-                    && canApplyAttackBoost(selectedCardKey, selectedCard)
-                    && (isHandMagicSelected || mycurrentmp >= nextCost)
+                    && canSelectHandComboCard(cardKey, selectedCardKey, selectedCard)
+                    && (cardKey !== MAGIC_CARD_KEY || isHandMagicSelected || mycurrentmp >= nextCost)
                     && !(controlEffectGlobal?.target === myPlayerRole));
             }
             if (role === myPlayerRole && shouldTutorialDisableCard(cardKey, card, handIndex)) {
@@ -2966,6 +3263,19 @@ function renderHands() {
     };
 
     const renderMagicHandButtons = (magicHand, targetDiv) => {
+        const screenDiv = targetDiv?.closest(".screen-area");
+        const normalHandLength = targetDiv === myMagicHandDiv ? myHand.length : tekiHand.length;
+        const columns = window.matchMedia("(max-width: 1004px)").matches ? 6 : 8;
+        const occupiedInLastRow = normalHandLength % columns;
+        const normalRows = Math.max(1, Math.ceil(normalHandLength / columns));
+        const freeSlotsInCurrentRow = occupiedInLastRow === 0 ? 0 : columns - occupiedInLastRow;
+        const attachToCurrentRow = normalHandLength > columns && magicHand.length <= freeSlotsInCurrentRow;
+        const magicRow = normalHandLength <= columns
+            ? 2
+            : (attachToCurrentRow ? normalRows : normalRows + 1);
+        const firstMagicColumn = Math.max(1, columns - magicHand.length + 1);
+
+        screenDiv?.classList.toggle("magic-row-attach", magicHand.length > 0);
         magicHand.forEach((cardKey, magicIndex) => {
             const card = CARDS[cardKey];
             if (!card) return;
@@ -2973,6 +3283,8 @@ function renderHands() {
             const btn = document.createElement("button");
             btn.className = "magic-card hand-card";
             btn.dataset.magicIndex = String(magicIndex);
+            btn.style.gridColumn = String(firstMagicColumn + magicIndex);
+            btn.style.gridRow = String(magicRow);
             btn.innerHTML = `
                 <img src="${card.imgSrc}" alt="${card.name}">
                 <div class="magic-mp-cost">${card.mpCost}MP</div>
@@ -2984,8 +3296,8 @@ function renderHands() {
 
             const selectedCard = getSelectedCard();
             const selectedCardKey = getSelectedCardKey();
-            const selectedCount = selectedBoostCardIndexes.length + selectedHandMagicCardIndexes.length;
-            const nextCost = (selectedCount + 1) * card.mpCost;
+    const selectedEnadoriCount = getSelectedBoostEntries().length;
+    const nextCost = (selectedEnadoriCount + 1) * card.mpCost;
             const isSelected = selectedBoostCardIndexes.includes(magicIndex);
             const canUseMagic = isMyTurnGlobal
                 && pendingAttackGlobal === 0
@@ -3030,8 +3342,12 @@ function renderWaitingHandPlaceholders() {
     tekiHandDiv.innerHTML = "";
     myMagicHandDiv.innerHTML = "";
     tekiMagicHandDiv.innerHTML = "";
-    document.getElementById("my-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
-    document.getElementById("enemy-screen")?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
+    const myScreen = document.getElementById("my-screen");
+    const enemyScreen = document.getElementById("enemy-screen");
+    myScreen?.classList.remove("magic-row-attach");
+    enemyScreen?.classList.remove("magic-row-attach");
+    myScreen?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player1");
+    enemyScreen?.classList.toggle("hand-screen-hidden", myPlayerRole !== "player2");
 
     const targetDiv = myPlayerRole === "player1" ? myHandDiv : tekiHandDiv;
     if (!targetDiv) return;
@@ -3358,13 +3674,14 @@ if (ac?.player && pendingAttackGlobal > 0) {
         { preserveOrder: Boolean(ac.reflected) }
     );
 } else if (sc?.player && sc.target) {
-    updateObservedAttackTargetDisplay(sc.player, sc.target, Boolean(damageResultGlobal), sc.type === "attack");
+    updateObservedAttackTargetDisplay(sc.player, sc.target, Boolean(damageResultGlobal), sc.type === "attack", { actionType: sc.type });
 } else if (data.turn === "player1" || data.turn === "player2") {
     updateObservedAttackTargetDisplay(data.turn, getOpponentRole(data.turn), Boolean(damageResultGlobal));
 }
 
 // ラウンド開始（attack_card も selected_card も null）になったら全表示をクリア
-if ((!ac || pendingAttackGlobal === 0) && !sc) {
+// 結果表示中はカード紹介の上に重ねたいので、ここでは消さない。
+if ((!ac || pendingAttackGlobal === 0) && !sc && !damageResultGlobal) {
     clearCardActionDisplays();
     clearSelectedCardState();
 }
@@ -3387,10 +3704,10 @@ if (sc && sc.player && (sc.player !== myPlayerRole || sc.keep)) {
             const boosts = Array.isArray(sc.boosts)
                 ? sc.boosts
                 : (sc.boostName ? [{ name: sc.boostName, label: sc.boostLabel || BOOST_LABEL, description: sc.boostDescription, imgSrc: sc.boostImgSrc }] : []);
-            const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34)).join("");
+            const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34, true)).join("");
             infoDiv.innerHTML = `
                 ${isSelfAttack ? `<div class="self-attack-badge">自分に攻撃</div>` : ""}
-                ${renderCardInfoBlock(sc, sc.label)}
+                ${renderCardInfoBlock(sc, sc.label, 40, true)}
                 ${boostHtml}
             `;
         }
@@ -3431,10 +3748,10 @@ if (ac && pendingAttackGlobal > 0) {
         const boosts = Array.isArray(ac.boosts)
             ? ac.boosts
             : (ac.boostName ? [{ name: ac.boostName, label: ac.boostLabel || BOOST_LABEL, description: ac.boostDescription, imgSrc: ac.boostImgSrc }] : []);
-        const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34)).join("");
+        const boostHtml = boosts.map(boost => renderCardInfoBlock(boost, boost.label || BOOST_LABEL, 34, true)).join("");
         dispDiv.innerHTML = `
             ${isSelfAttack ? `<div class="self-attack-badge">自分に攻撃</div>` : ""}
-            ${renderCardInfoBlock(ac, `${attackLabel}${rateLabel}`)}
+            ${renderCardInfoBlock(ac, `${attackLabel}${rateLabel}`, 40, true)}
             ${boostHtml}
         `;
         attackerDiv.appendChild(dispDiv);
@@ -3459,9 +3776,13 @@ renderResultPanelDisplay(damageResultGlobal);
     maybeRunControlledRound();
     
     if (data.turn === "end") {
+        const defenseRevealDelayForVictory = Array.isArray(damageResultGlobal?.usedDefenseCards)
+            ? damageResultGlobal.usedDefenseCards.length * DEFENSE_REVEAL_INTERVAL_MS
+            : 0;
         scheduleVictoryScreen(
             data.winner || getWinnerFromHp(data.player1_hp, data.player2_hp),
-            `${data.reset_trigger || "game"}:${data.player1_hp}:${data.player2_hp}:${damageResultGlobal?.id || ""}`
+            `${data.reset_trigger || "game"}:${data.player1_hp}:${data.player2_hp}:${damageResultGlobal?.id || ""}`,
+            VICTORY_SCREEN_DELAY_MS + defenseRevealDelayForVictory
         );
     } else {
         clearTimeout(scheduledVictoryTimer);
@@ -3523,7 +3844,7 @@ trainingButton?.addEventListener("click", () => {
 function getBookCardTypeLabel(type) {
     if (type === "attack") return "攻撃";
     if (type === "defense") return "守備";
-    if (type === "heal") return "回復";
+    if (type === "heal" || type === "mpheal") return "回復";
     if (type === "magic") return "魔法";
     return "特殊";
 }
@@ -3539,15 +3860,19 @@ function getBookCardValueLabel(card) {
             : (card.value || "-");
     }
     if (card.type === "heal") return card.value || "-";
+    if (card.type === "mpheal") return `MP${card.value || "-"}`;
     if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
     return "-";
 }
 
-function matchesCardBookFilter(card, filter = "all") {
+function matchesCardBookFilter(card, filter = "all", cardKey = "") {
     if (!card) return false;
     if (filter === "all") return true;
     if (filter === "element-machine") return card.element === "machine" || card.element === "fire";
+    if (filter === "element-electric") return card.element === "electric";
     if (filter === "element-material") return card.element === "material";
+    if (filter === "element-management") return card.element === "management" || cardKey === "choubo";
+    if (filter === "heal") return card.type === "heal" || card.type === "mpheal";
     return card.type === filter;
 }
 
@@ -3557,7 +3882,7 @@ function setCardBookFeatured(card, cardKey = "") {
         cardBookFeatured.innerHTML = "";
         return;
     }
-    cardBookFeatured.innerHTML = renderCardInfoBlock(card, getDisplayCardLabel(card));
+    cardBookFeatured.innerHTML = renderCardInfoBlock(card, getDisplayCardLabel(card), 40, true);
     cardBookContainer?.querySelectorAll(".card-book-slot").forEach(slot => {
         slot.classList.toggle("is-selected", slot.dataset.cardKey === cardKey);
     });
@@ -3568,7 +3893,7 @@ function renderCardBook(filter = "all") {
     cardBookContainer.innerHTML = "";
 
     const entries = Object.entries(CARDS)
-        .filter(([, card]) => matchesCardBookFilter(card, filter));
+        .filter(([cardKey, card]) => matchesCardBookFilter(card, filter, cardKey));
 
     entries.forEach(([cardKey, card]) => {
         const slot = document.createElement("button");
@@ -3584,7 +3909,7 @@ function renderCardBook(filter = "all") {
                 <span class="card-book-fallback" style="display: none;">${card.name.slice(0, 1)}</span>
             </span>
             <div class="card-book-preview" role="tooltip">
-                ${renderCardInfoBlock(card, getDisplayCardLabel(card))}
+                ${renderCardInfoBlock(card, getDisplayCardLabel(card), 40, true)}
             </div>
         `;
         slot.addEventListener("click", () => setCardBookFeatured(card, cardKey));
@@ -3739,7 +4064,7 @@ window.resetGame = function() {
     attackDisplayAfterResultTimer = null;
     displayedAttackerRole = null;
     heldAttackDisplayAfterResult = null;
-    battleSelectDiv?.classList.remove("attacker-player2", "switching-attacker-order");
+    battleSelectDiv?.classList.remove("attacker-player2", "switching-attacker-order", "self-attack-mode", "heal-mode", "heal-player1", "heal-player2");
     closeTutorial(false);
     cancelMatchStartCountdown(true);
     resetTutorialProgress();
@@ -3886,6 +4211,7 @@ if (timerRemaining <= 0) {
     reserveDrawForCurrentPlayer(usedDefenseCount);
     const damageResult = makeDamageResult(myPlayerRole, finalDamage, currentAttackCardGlobal, hpBeforeDamage);
     damageResult.usedDefenseCards = revealedDefenseCards;
+    const resolvedAttackCard = currentAttackCardGlobal ? { ...currentAttackCardGlobal } : null;
     const nextTurnAfterDefense = currentAttackCardGlobal?.afterTurn || myPlayerRole;
     pendingAttackGlobal = 0;
     currentAttackCardGlobal = null;
@@ -3902,6 +4228,13 @@ if (timerRemaining <= 0) {
     if (newHp <= 0) {
         markKnockoutResult(damageResult);
         sendGameState("end", 0, null, timeoutLog, damageResult);
+    } else if ((resolvedAttackCard?.relayRepeat || 0) > 0) {
+        const repeatedAttackCard = {
+            ...resolvedAttackCard,
+            relayRepeat: Math.max(0, (resolvedAttackCard.relayRepeat || 0) - 1),
+            repeatId: Date.now()
+        };
+        sendGameState(myPlayerRole, repeatedAttackCard.value || 0, repeatedAttackCard, timeoutLog, damageResult);
     } else {
         sendGameState(nextTurnAfterDefense, 0, null, timeoutLog, damageResult);
     }

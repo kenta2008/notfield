@@ -357,10 +357,19 @@ textarea {
 .magic-hand-area {
     display: flex;
     justify-content: flex-end;
+    align-content: flex-start;
+    flex-wrap: wrap;
     gap: 6px;
     width: 647px;
-    min-height: 104px;
-    margin: 8px 0 0 14px;
+    max-width: calc(100% - 28px);
+    min-height: 0;
+    margin: 2px 0 0 14px;
+}
+
+.magic-hand-area:empty {
+    display: none;
+    min-height: 0;
+    margin: 0;
 }
 
 .magic-card {
@@ -383,10 +392,9 @@ textarea {
 
 .magic.magic-selected,
 .magic-card.magic-selected {
-    outline: 3px solid #00a37a;
-    outline-offset: 3px;
-    transform: translateY(-5px);
-    filter: drop-shadow(0 7px 9px rgba(0, 80, 60, 0.35));
+    outline: 0;
+    transform: none;
+    filter: none;
 }
 
 .card-value {
@@ -503,6 +511,16 @@ textarea {
     -webkit-text-fill-color: #d63832;
 }
 
+.hand-card .card-value.electric-card-value {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
+.hand-card .card-value.management-card-value {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
 .hand-card .card-value.material-card-value {
     color: #b13bd0;
     -webkit-text-fill-color: #b13bd0;
@@ -515,6 +533,8 @@ textarea {
 
 .hand-card:disabled .card-value.fire-card-value,
 .hand-card:disabled .card-value.machine-card-value,
+.hand-card:disabled .card-value.electric-card-value,
+.hand-card:disabled .card-value.management-card-value,
 .hand-card:disabled .card-value.material-card-value,
 .hand-card:disabled .card-value.mp-card-value {
     color: #6f746f;
@@ -541,16 +561,15 @@ textarea {
 }
 
 .hand-card.defense-selected {
-    transform: translateY(-8px);
-    outline: 3px solid #00a37a;
-    outline-offset: 3px;
-    filter: drop-shadow(0 8px 10px rgba(0, 80, 60, 0.28));
+    transform: none;
+    outline: 0;
+    filter: none;
 }
 
 .hand-card.defense-selected .card-value {
-    background-color: #00a37a;
-    color: #fff;
-    -webkit-text-fill-color: #fff;
+    background-color: rgb(221 255 204);
+    color: #000000;
+    -webkit-text-fill-color: #000000;
 }
 
 .hand-card.defense-glow-group::after {
@@ -682,7 +701,7 @@ textarea {
 
 .tutorial-overlay.defense-group-mode ~ .screen-area,
 .tutorial-overlay.defense-confirm-mode ~ .screen-area {
-    z-index: 67;
+    z-index: 71;
 }
 
 .tutorial-overlay.defense-group-mode ~ .screen-area .hand-card,
@@ -704,6 +723,41 @@ textarea {
     animation: card-shatter-out 0.82s ease-in forwards;
     transform-origin: center;
     overflow: visible;
+}
+
+.hand-card.destroy-pending {
+    opacity: 1;
+    filter: none;
+}
+
+.hand-card.destroy-pending img {
+    opacity: 0.38 !important;
+    filter: blur(1px) brightness(0.38) saturate(0.45) !important;
+}
+
+.hand-card.destroy-pending::after {
+    content: "?";
+    position: absolute;
+    inset: 0 0 18px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-size: 38px;
+    font-weight: 900;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    animation: unknown-card-pulse 0.7s ease-in-out infinite alternate;
+}
+
+.hand-card.destroy-phase-reveal img {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.hand-card.destroy-phase-reveal .card-value {
+    background-color: #ddffc9 !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
 .hand-card.shatter-out img,
@@ -739,12 +793,6 @@ textarea {
 }
 
 .player-result-active .battle-log,
-.player-result-active .selected-card-info,
-.player-result-active .selected-card-info-remote,
-.player-result-active .attack-card-display,
-.player-result-active .attack-total-display,
-.player-result-active .defense-card-list:not(.revealed-defense-sequence),
-.player-result-active .defense-card-display:not(.revealed-defense-card),
 .player-result-active .destroyed-card-display {
     display: none !important;
 }
@@ -754,13 +802,43 @@ textarea {
 }
 
 .player-result-active .damage-result-display {
-    position: relative;
-    z-index: 5;
+    position: absolute;
+    left: 0;
+    top: 58px;
+    z-index: 22;
+    width: min(300px, 100%);
+    transform: none;
     display: block !important;
+    pointer-events: none;
 }
 
 .destroyed-card-display {
     animation: result-panel-fade-in 0.28s ease-out both;
+}
+
+.destroyed-card-display.destroy-phase-unknown .card-info-panel,
+.destroyed-card-display.destroy-phase-reveal .card-info-panel {
+    animation: result-panel-fade-in 0.24s ease-out both;
+}
+
+.destroyed-unknown-card-info {
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.82);
+}
+
+.destroyed-unknown-image {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(135deg, rgba(0, 143, 111, 0.78), rgba(25, 39, 52, 0.78)),
+        #008f6f;
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
 }
 
 .destroyed-card-display.shatter-info-display .card-info-panel {
@@ -812,7 +890,7 @@ textarea {
 .result-panel {
     width: min(100%, 320px);
     min-height: 150px;
-    margin: 80px auto 0;
+    margin: 0 auto;
     padding: 14px 20px;
     border-radius: 30px;
     background: rgba(45, 45, 45, 0.86);
@@ -872,13 +950,17 @@ textarea {
 }
 
 .knockout-rise-result {
+    display: grid;
+    place-items: center;
     background: #e60012;
     overflow: hidden;
-    animation: knockout-rise-panel 1.5s ease-in both;
+    animation: knockout-rise-panel 1.2s cubic-bezier(0.22, 0.8, 0.22, 1) both;
 }
 
 .knockout-rise-result .result-value {
-    animation: knockout-rise-text 1.5s ease-in both;
+    line-height: 1;
+    transform: none;
+    animation: none;
 }
 
 .victory-screen {
@@ -1254,6 +1336,8 @@ textarea {
 
 .card-book-preview-name.fire-attribute-name,
 .card-book-preview-name.machine-attribute-name,
+.card-book-preview-name.electric-attribute-name,
+.card-book-preview-name.management-attribute-name,
 .card-book-preview-name.material-attribute-name {
     display: flex;
     align-items: center;
@@ -1264,6 +1348,14 @@ textarea {
 .card-book-preview-name.fire-attribute-name,
 .card-book-preview-name.machine-attribute-name {
     color: #d63832;
+}
+
+.card-book-preview-name.electric-attribute-name {
+    color: #d88900;
+}
+
+.card-book-preview-name.management-attribute-name {
+    color: #d88900;
 }
 
 .card-book-preview-name.material-attribute-name {
@@ -1699,6 +1791,23 @@ textarea {
     opacity: 0;
 }
 
+.select.heal-player1 > .player2 .selected-card-info,
+.select.heal-player1 > .player2 .selected-card-info-remote,
+.select.heal-player1 > .player2 .attack-card-display,
+.select.heal-player1 > .player2 .attack-total-display,
+.select.heal-player1 > .player2 .defense-card-list,
+.select.heal-player1 > .player2 .defense-card-display,
+.select.heal-player1 > .player2 h3,
+.select.heal-player2 > .player1 .selected-card-info,
+.select.heal-player2 > .player1 .selected-card-info-remote,
+.select.heal-player2 > .player1 .attack-card-display,
+.select.heal-player2 > .player1 .attack-total-display,
+.select.heal-player2 > .player1 .defense-card-list,
+.select.heal-player2 > .player1 .defense-card-display,
+.select.heal-player2 > .player1 h3 {
+    display: none !important;
+}
+
 .hand-area {
     display: flex;
     flex-wrap: wrap;
@@ -1708,6 +1817,39 @@ textarea {
     margin-left: 14px;
     gap: 1px;
     margin-top: 5px;
+}
+
+.screen-area {
+    --hand-card-width: 80px;
+    --hand-card-height: 104px;
+    --hand-gap: 1px;
+    --hand-row-width: 647px;
+}
+
+.screen-area.magic-row-attach {
+    display: grid;
+    grid-template-columns: repeat(8, var(--hand-card-width));
+    grid-auto-rows: var(--hand-card-height);
+    gap: var(--hand-gap);
+    align-items: start;
+    justify-content: start;
+    width: var(--hand-row-width);
+    max-width: calc(100% - 28px);
+    min-height: calc((var(--hand-card-height) * 2) + var(--hand-gap));
+    margin-left: 14px;
+}
+
+.screen-area.magic-row-attach .hand-area,
+.screen-area.magic-row-attach .magic-hand-area {
+    display: contents;
+}
+
+.screen-area.magic-row-attach .hand-card {
+    width: var(--hand-card-width);
+}
+
+.screen-area.magic-row-attach .magic-card {
+    justify-self: end;
 }
 
 .waiting-hand-placeholder {
@@ -1731,7 +1873,8 @@ textarea {
     display: grid;
     grid-template-columns: 86px 1fr;
     width: 300px;
-    height: 90px;
+    min-height: 90px;
+    height: auto;
     margin: 12px auto 0;
     overflow: hidden;
     border: 4.5px solid #55bb99;
@@ -1793,7 +1936,7 @@ textarea {
 }
 
 .card-info-panel.has-description .card-info-body {
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: 30px 30px 26px;
 }
 
 .card-info-name {
@@ -1827,12 +1970,13 @@ textarea {
     overflow: hidden;
     background: #efffe2;
     color: #315244;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     box-sizing: border-box;
+    border-top: 1px solid rgba(85, 187, 153, 0.55);
 }
 
 
@@ -1854,6 +1998,8 @@ textarea {
 
 .card-info-name.fire-attribute-name,
 .card-info-name.machine-attribute-name,
+.card-info-name.electric-attribute-name,
+.card-info-name.management-attribute-name,
 .card-info-name.material-attribute-name {
     gap: 4px;
 }
@@ -1862,6 +2008,16 @@ textarea {
 .card-info-name.machine-attribute-name {
     color: #d63832;
     -webkit-text-fill-color: #d63832;
+}
+
+.card-info-name.electric-attribute-name {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
+.card-info-name.management-attribute-name {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
 }
 
 .card-info-name.material-attribute-name {
@@ -2080,6 +2236,7 @@ textarea {
 
 .player1 h3 {
     position: relative;
+    z-index: 26;
     text-align: center;
     margin-top: 20px;
     color: #008f6f;
@@ -2107,6 +2264,7 @@ textarea {
 
 .player2 h3 {
     position: relative;
+    z-index: 26;
     text-align: center;
     color: #008f6f;
     background-color: #eeeeee;
@@ -2284,28 +2442,20 @@ textarea {
 
 @keyframes knockout-rise-panel {
     0% {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 0;
+        transform: translateY(96px);
     }
-    55% {
+    12% {
         opacity: 1;
-        transform: translateY(-58px);
+        transform: translateY(78px);
+    }
+    78% {
+        opacity: 1;
+        transform: translateY(-46px);
     }
     100% {
         opacity: 0;
-        transform: translateY(-132px);
-    }
-}
-
-@keyframes knockout-rise-text {
-    0% {
-        transform: translateY(18px) scale(1.12);
-    }
-    40% {
-        transform: translateY(-38px) scale(1.08);
-    }
-    100% {
-        transform: translateY(-118px) scale(1.02);
+        transform: translateY(-92px);
     }
 }
 
@@ -2323,6 +2473,17 @@ textarea {
         opacity: 0;
         transform: scale(0.78) rotate(4deg);
         filter: blur(1.5px) brightness(0.8);
+    }
+}
+
+@keyframes unknown-card-pulse {
+    from {
+        opacity: 0.72;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.04);
     }
 }
 
@@ -2445,33 +2606,34 @@ textarea {
     z-index: 4;
     flex: 0 0 34px;
     width: 34px;
+    height: 34px;
     margin: 17px -5px 0;
     text-align: center;
-    font-size: 34px;
+    font-size: 0;
     line-height: 1;
     font-weight: 900;
-    color: #d03030;
-    text-shadow:
-        1px 0 #fff,
-        -1px 0 #fff,
-        0 1px #fff,
-        0 -1px #fff;
+    color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    text-shadow: none;
     transform: none;
     transition: transform 0.2s ease;
     pointer-events: none;
 }
 
 .attack-arrow.arrow-down {
+    background-image: url("images/ui/right.png");
     transform: none;
 }
 
 .attack-arrow.arrow-up {
+    background-image: url("images/ui/left.png");
     transform: none;
 }
 
 .attack-arrow.arrow-self {
-    color: #ff1744;
-    font-size: 34px;
+    background-image: url("images/ui/right.png");
     transform: none;
     animation: none;
 }
@@ -2503,6 +2665,13 @@ textarea {
 
 #game-screen {
     position: relative;
+    height: 100%;
+    min-height: 0;
+}
+
+.gameoya {
+    height: 100%;
+    min-height: 0;
 }
 
 .game-top-bar {
@@ -2909,7 +3078,9 @@ textarea {
 
     .attack-arrow {
         margin: 0;
-        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        font-size: 0;
     }
 
     .attack-arrow.arrow-down,
@@ -3030,9 +3201,14 @@ textarea {
     .result-panel {
         width: min(92vw, 260px);
         min-height: 110px;
-        margin-top: 30px;
+        margin-top: 0;
         padding: 12px 16px;
         border-radius: 22px;
+    }
+
+    .player-result-active .damage-result-display {
+        top: 32px;
+        width: min(260px, calc(100% - 8px));
     }
 
     .result-value {
@@ -3112,15 +3288,17 @@ textarea {
         overflow: hidden;
     }
 
-    #game-screen[style*="display: block"] {
+    #game-screen[style*="display: block"],
+    #game-screen:not([style*="display: none"]) {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        align-content: start;
+        grid-template-rows: 28px 226px 5px minmax(148px, max-content) minmax(0, 1fr) 30px;
+        align-content: stretch;
         column-gap: 26px;
         row-gap: 6px;
         height: 100dvh;
         min-height: 0;
-        padding: 10px 10px 46px;
+        padding: 10px 10px 0;
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
@@ -3266,9 +3444,10 @@ textarea {
         left: 50%;
         z-index: 4;
         width: 26px;
+        height: 26px;
         margin: 0;
-        color: #ff4f84;
-        font-size: 30px;
+        color: transparent;
+        font-size: 0;
         line-height: 1;
         transform: translateX(-50%) !important;
         text-shadow: none;
@@ -3369,6 +3548,19 @@ textarea {
         box-sizing: border-box;
     }
 
+    #my-screen.magic-row-attach,
+    #enemy-screen.magic-row-attach {
+        --hand-card-width: 52px;
+        --hand-card-height: 76px;
+        --hand-gap: 5px;
+        --hand-row-width: calc((52px * 6) + (5px * 5));
+        grid-template-columns: repeat(6, var(--hand-card-width));
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+    }
+
     #my-screen.hand-screen-hidden,
     #enemy-screen.hand-screen-hidden {
         display: none;
@@ -3450,13 +3642,13 @@ textarea {
     }
 
     .game-bottom-bar {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        position: static;
+        grid-column: 1 / -1;
+        grid-row: 6;
+        align-self: end;
         z-index: 30;
         height: 30px;
-        margin: 0;
+        margin: 0 -10px;
         padding: 0 8px 0 22px;
     }
 

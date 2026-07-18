@@ -349,6 +349,11 @@ textarea {
     background: #eef8df;
 }
 
+.hand-card[data-card-key="choubo"] img {
+    object-fit: contain;
+    background: #eef8df;
+}
+
 .magic-hand-area {
     display: flex;
     justify-content: flex-end;
@@ -2022,6 +2027,11 @@ textarea {
 
 .card-info-panel.choubo-card-info .card-info-image img,
 .card-info-panel.roppou-card-info .card-info-image img {
+    object-fit: contain;
+    background: #eef8df;
+}
+
+.card-info-panel.choubo-card-info .card-info-image img {
     object-fit: contain;
     background: #eef8df;
 }

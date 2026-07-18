@@ -13,8 +13,10 @@
       "player2_mp": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99" },
       "player1_def": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
       "player2_def": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
-      "player1_pending_draws": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 8)" },
-      "player2_pending_draws": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 8)" },
+      "player1_pending_draws": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 20)" },
+      "player2_pending_draws": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 20)" },
+      "player1_hand_limit": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 8 && newData.val() <= 20)" },
+      "player2_hand_limit": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 8 && newData.val() <= 20)" },
       "pending_attack": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
       "round": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 999" },
       "reset_trigger": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)" },
@@ -23,36 +25,19 @@
       "winner": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2' || newData.val() == 'draw'))" },
       "player1_name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 8)" },
       "player2_name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 8)" },
-
       "player1_hand": {
-        "0": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "1": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "2": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "3": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "4": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "5": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "6": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "7": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "$other": { ".validate": false }
+        "$i": { ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
       "player2_hand": {
-        "0": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "1": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "2": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "3": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "4": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "5": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "6": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "7": { ".validate": "newData.isString() && (newData.val() == 'pencil' || newData.val() == 'hacking' || newData.val() == 'mojibake' || newData.val() == 'kusaifuku' || newData.val() == 'gojyuukyuu' || newData.val() == 'kanningu' || newData.val() == 'seisankari' || newData.val() == 'yousetu' || newData.val() == 'handa' || newData.val() == 'kakomon' || newData.val() == 'monita' || newData.val() == 'kyuukou' || newData.val() == 'ramen' || newData.val() == 'enadori' || newData.val() == 'harapeko' || newData.val() == 'mobairubatteri' || newData.val() == 'nuton')" },
-        "$other": { ".validate": false }
+        "$i": { ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
       "player1_magic_hand": {
         ".validate": "!newData.exists() || true",
-        "$i": { ".validate": "newData.isString() && newData.val() == 'enadori'" }
+        "$i": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
       "player2_magic_hand": {
         ".validate": "!newData.exists() || true",
-        "$i": { ".validate": "newData.isString() && newData.val() == 'enadori'" }
+        "$i": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
 
       "player1_def_cards": {
@@ -70,10 +55,10 @@
         "player": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "target": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "showOnTurn": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
-        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'attack' || newData.val() == 'defense' || newData.val() == 'heal' || newData.val() == 'magic'))" },
+        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val().matches(/^[a-z_]{1,24}$/)))" },
         "name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
         "label": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
-        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'machine' || newData.val() == 'fire' || newData.val() == 'material'))" },
+        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val().matches(/^[a-z_]{1,32}$/)))" },
         "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
         "imgSrc": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 160)" },
         "keep": { ".validate": "!newData.exists() || newData.isBoolean()" },
@@ -93,7 +78,7 @@
         "value": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "baseValue": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "multiplier": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 1 && newData.val() <= 256)" },
-        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'machine' || newData.val() == 'fire' || newData.val() == 'material'))" },
+        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val().matches(/^[a-z_]{1,32}$/)))" },
         "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 260)" },
         "player": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "target": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
@@ -109,6 +94,8 @@
         "reflectionFrom": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "reflectionId": { ".validate": "!newData.exists() || newData.isNumber()" },
         "reflectionDepth": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 10)" },
+        "relayRepeat": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 2)" },
+        "repeatId": { ".validate": "!newData.exists() || newData.isNumber()" },
         "boosts": {
           ".validate": "!newData.exists() || true",
           "$i": { "$other": { ".validate": true } }
@@ -120,13 +107,19 @@
         ".validate": "!newData.exists() || newData.hasChildren(['player'])",
         "id": { ".validate": "!newData.exists() || newData.isNumber()" },
         "player": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
-        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'heal' || newData.val() == 'reflect'))" },
+        "attackPlayer": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
+        "attackTarget": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
+        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'heal' || newData.val() == 'mpheal' || newData.val() == 'reflect'))" },
         "damage": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "amount": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
         "rawDamage": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "message": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 20)" },
         "instantDeath": { ".validate": "!newData.exists() || newData.isBoolean()" },
         "knockout": { ".validate": "!newData.exists() || newData.isBoolean()" },
+        "usedDefenseCards": {
+          ".validate": "!newData.exists() || true",
+          "$i": { "$other": { ".validate": true } }
+        },
         "$other": { ".validate": false }
       },
 
@@ -135,11 +128,11 @@
         "id": { ".validate": "!newData.exists() || newData.isNumber()" },
         "type": { ".validate": "!newData.exists() || (newData.isString() && newData.val() == 'destroy_hand')" },
         "target": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
-        "index": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 7)" },
+        "index": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 19)" },
         "cardKey": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)" },
         "name": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
-        "cardType": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'attack' || newData.val() == 'defense' || newData.val() == 'heal' || newData.val() == 'magic'))" },
-        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'machine' || newData.val() == 'fire' || newData.val() == 'material'))" },
+        "cardType": { ".validate": "!newData.exists() || (newData.isString() && (newData.val().matches(/^[a-z_]{1,24}$/)))" },
+        "element": { ".validate": "!newData.exists() || (newData.isString() && (newData.val().matches(/^[a-z_]{1,32}$/)))" },
         "value": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "reductionRate": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 1)" },
         "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },

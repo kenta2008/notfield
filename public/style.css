@@ -4,48 +4,38 @@
     font-family:'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','Meiryo UI','メイリオ',Verdana,'ＭＳ Ｐゴシック',sans-serif;
 }
 
-.attack {
+.attack,
+.heal,
+.mpheal,
+.defense,
+.special,
+.magic,
+.magic-card {
     height: 80px;
     width: 80px;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-.attack img {
+.attack img,
+.heal img,
+.mpheal img,
+.defense img,
+.special img,
+.magic img,
+.magic-card img,
+.hand-card > img {
+    display: block;
     height: 80px;
     width: 80px;
-}
-
-
-.heal {
-    height: 80px;
-    width: 80px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-
-.heal img {
-    height: 80px;
-    width: 80px;
-}
-
-
-.defense {
-    height: 80px;
-    width: 80px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-
-.defense img {
-    height: 80px;
-    width: 80px;
+    max-width: 100%;
+    max-height: 80px;
+    object-fit: contain;
+    object-position: center;
 }
 
 
@@ -330,7 +320,7 @@ textarea {
 }
 
 
-.attack, .heal, .defense, .magic, .magic-card {
+.attack, .heal, .mpheal, .defense, .magic, .special, .magic-card {
     width: 80px;
     height: auto; /* 変更：文字が入るようにautoにする */
     background: none;
@@ -341,20 +331,40 @@ textarea {
     align-items: center; /* 左右の中央揃え */
 }
 
+.mpheal img,
 .magic img,
+.special img,
 .magic-card img {
     width: 80px;
     height: 80px;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 80px;
+    object-fit: contain;
+    object-position: center;
+}
+
+.hand-card[data-card-key="choubo"] img,
+.hand-card[data-card-key="roppou"] img {
+    object-fit: contain;
+    background: #eef8df;
 }
 
 .magic-hand-area {
     display: flex;
     justify-content: flex-end;
+    align-content: flex-start;
+    flex-wrap: wrap;
     gap: 6px;
     width: 647px;
-    min-height: 104px;
-    margin: 8px 0 0 14px;
+    max-width: calc(100% - 28px);
+    min-height: 0;
+    margin: 2px 0 0 14px;
+}
+
+.magic-hand-area:empty {
+    display: none;
+    min-height: 0;
+    margin: 0;
 }
 
 .magic-card {
@@ -377,10 +387,9 @@ textarea {
 
 .magic.magic-selected,
 .magic-card.magic-selected {
-    outline: 3px solid #00a37a;
-    outline-offset: 3px;
-    transform: translateY(-5px);
-    filter: drop-shadow(0 7px 9px rgba(0, 80, 60, 0.35));
+    outline: 0;
+    transform: none;
+    filter: none;
 }
 
 .card-value {
@@ -497,6 +506,21 @@ textarea {
     -webkit-text-fill-color: #d63832;
 }
 
+.hand-card .card-value.electric-card-value {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
+.hand-card .card-value.control-card-value {
+    color: #1677c8;
+    -webkit-text-fill-color: #1677c8;
+}
+
+.hand-card .card-value.management-card-value {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
 .hand-card .card-value.material-card-value {
     color: #b13bd0;
     -webkit-text-fill-color: #b13bd0;
@@ -509,6 +533,9 @@ textarea {
 
 .hand-card:disabled .card-value.fire-card-value,
 .hand-card:disabled .card-value.machine-card-value,
+.hand-card:disabled .card-value.electric-card-value,
+.hand-card:disabled .card-value.control-card-value,
+.hand-card:disabled .card-value.management-card-value,
 .hand-card:disabled .card-value.material-card-value,
 .hand-card:disabled .card-value.mp-card-value {
     color: #6f746f;
@@ -535,16 +562,15 @@ textarea {
 }
 
 .hand-card.defense-selected {
-    transform: translateY(-8px);
-    outline: 3px solid #00a37a;
-    outline-offset: 3px;
-    filter: drop-shadow(0 8px 10px rgba(0, 80, 60, 0.28));
+    transform: none;
+    outline: 0;
+    filter: none;
 }
 
 .hand-card.defense-selected .card-value {
-    background-color: #00a37a;
-    color: #fff;
-    -webkit-text-fill-color: #fff;
+    background-color: rgb(221 255 204);
+    color: #000000;
+    -webkit-text-fill-color: #000000;
 }
 
 .hand-card.defense-glow-group::after {
@@ -639,13 +665,11 @@ textarea {
 
 .tutorial-overlay.defense-confirm-mode ~ .select .defense-confirm-display {
     position: absolute;
-    z-index: 72;
+    z-index: 69;
     opacity: 1;
     filter: none;
-    box-shadow:
-        0 0 0 4px rgba(255, 255, 255, 0.98),
-        0 0 0 6px rgba(65, 112, 150, 0.82),
-        0 0 14px rgba(255, 255, 255, 0.9);
+    box-shadow: none;
+    animation: none;
 }
 
 .tutorial-overlay.defense-group-mode ~ .select .tutorial-player-focus::after,
@@ -655,17 +679,29 @@ textarea {
     left: 8px;
     right: 8px;
     top: 54px;
-    bottom: 96px;
-    z-index: 71;
+    bottom: 100px;
+    z-index: 68;
     background: #ffffff;
     border-radius: 8px;
     pointer-events: none;
 }
 
+.tutorial-overlay.defense-confirm-mode ~ .select .tutorial-player-focus::after {
+    content: none;
+}
+
+.tutorial-overlay.defense-confirm-mode ~ .select .tutorial-player-focus::after {
+    bottom: 54px;
+    box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.98),
+        0 0 0 6px rgba(65, 112, 150, 0.82),
+        0 0 14px rgba(255, 255, 255, 0.9);
+}
+
 .tutorial-overlay.defense-group-mode ~ .select .tutorial-player-focus,
 .tutorial-overlay.defense-confirm-mode ~ .select .tutorial-player-focus {
     position: relative;
-    z-index: 71;
+    z-index: 68;
 }
 
 .tutorial-overlay.defense-group-mode ~ .screen-area,
@@ -692,6 +728,41 @@ textarea {
     animation: card-shatter-out 0.82s ease-in forwards;
     transform-origin: center;
     overflow: visible;
+}
+
+.hand-card.destroy-pending {
+    opacity: 1;
+    filter: none;
+}
+
+.hand-card.destroy-pending img {
+    opacity: 0.38 !important;
+    filter: blur(1px) brightness(0.38) saturate(0.45) !important;
+}
+
+.hand-card.destroy-pending::after {
+    content: "?";
+    position: absolute;
+    inset: 0 0 18px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-size: 38px;
+    font-weight: 900;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    animation: unknown-card-pulse 0.7s ease-in-out infinite alternate;
+}
+
+.hand-card.destroy-phase-reveal img {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.hand-card.destroy-phase-reveal .card-value {
+    background-color: #ddffc9 !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
 .hand-card.shatter-out img,
@@ -727,24 +798,52 @@ textarea {
 }
 
 .player-result-active .battle-log,
-.player-result-active .selected-card-info,
-.player-result-active .selected-card-info-remote,
-.player-result-active .attack-card-display,
-.player-result-active .attack-total-display,
-.player-result-active .defense-card-list,
-.player-result-active .defense-card-display,
 .player-result-active .destroyed-card-display {
     display: none !important;
 }
 
+.revealed-defense-card {
+    animation: result-panel-fade-in 0.24s ease-out both;
+}
+
 .player-result-active .damage-result-display {
-    position: relative;
-    z-index: 5;
+    position: absolute;
+    left: 0;
+    top: 58px;
+    z-index: 22;
+    width: min(300px, 100%);
+    transform: none;
     display: block !important;
+    pointer-events: none;
 }
 
 .destroyed-card-display {
     animation: result-panel-fade-in 0.28s ease-out both;
+}
+
+.destroyed-card-display.destroy-phase-unknown .card-info-panel,
+.destroyed-card-display.destroy-phase-reveal .card-info-panel {
+    animation: result-panel-fade-in 0.24s ease-out both;
+}
+
+.destroyed-unknown-card-info {
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.82);
+}
+
+.destroyed-unknown-image {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(135deg, rgba(0, 143, 111, 0.78), rgba(25, 39, 52, 0.78)),
+        #008f6f;
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
 }
 
 .destroyed-card-display.shatter-info-display .card-info-panel {
@@ -796,7 +895,7 @@ textarea {
 .result-panel {
     width: min(100%, 320px);
     min-height: 150px;
-    margin: 80px auto 0;
+    margin: 0 auto;
     padding: 14px 20px;
     border-radius: 30px;
     background: rgba(45, 45, 45, 0.86);
@@ -856,13 +955,17 @@ textarea {
 }
 
 .knockout-rise-result {
+    display: grid;
+    place-items: center;
     background: #e60012;
     overflow: hidden;
-    animation: knockout-rise-panel 1.5s ease-in both;
+    animation: knockout-rise-panel 1.2s cubic-bezier(0.22, 0.8, 0.22, 1) both;
 }
 
 .knockout-rise-result .result-value {
-    animation: knockout-rise-text 1.5s ease-in both;
+    line-height: 1;
+    transform: none;
+    animation: none;
 }
 
 .victory-screen {
@@ -999,7 +1102,7 @@ textarea {
 .card-book-title-pill {
     width: 150px;
     height: 24px;
-    border-radius: 6px;
+    border-radius: 50px;
     background: #e9fff2;
     color: #e25a4f;
     font-size: 20px;
@@ -1018,7 +1121,8 @@ textarea {
 .card-book-layout {
     display: grid;
     grid-template-columns: 168px minmax(0, 1fr);
-    gap: 18px;
+    grid-template-rows: 112px minmax(0, 1fr);
+    gap: 14px 18px;
     width: 100%;
     height: 100%;
     padding: 60px 24px 46px;
@@ -1026,6 +1130,7 @@ textarea {
 }
 
 .card-book-sidebar {
+    grid-row: 1 / 3;
     display: grid;
     align-content: start;
     gap: 8px;
@@ -1053,15 +1158,39 @@ textarea {
 }
 
 .card-book-play-area {
+    grid-column: 2;
+    grid-row: 2;
     min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 246px 40px 40px 64px;
+    padding: 10px 40px 40px 0;
     box-sizing: border-box;
 }
 
-.card-book-featured {
+.card-book-popup.is-attribute-guide .card-book-play-area {
+    grid-row: 1 / 3;
+    padding-top: 42px;
+}
+
+.card-book-popup.is-attribute-guide .card-book-featured {
     display: none;
+}
+
+.card-book-featured {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.card-book-featured .card-info-panel {
+    margin: 0;
 }
 
 .card-book-container {
@@ -1070,6 +1199,69 @@ textarea {
     gap: 12px;
     align-content: start;
     justify-content: start;
+}
+
+.card-book-container.attribute-guide-container {
+    display: block;
+    width: min(100%, 760px);
+    margin: 0;
+}
+
+.attribute-guide-page {
+    display: grid;
+    gap: 28px;
+    width: 100%;
+    color: #44524b;
+    font-size: 17px;
+    line-height: 1.55;
+}
+
+.attribute-guide-box,
+.attribute-guide-note {
+    overflow: hidden;
+    border: 1.5px solid #008f6f;
+    border-radius: 5px;
+    background: rgba(246, 255, 230, 0.74);
+}
+
+.attribute-guide-box p,
+.attribute-guide-note p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    margin: 0;
+    padding: 4px 8px;
+    border-bottom: 1px solid #008f6f;
+    box-sizing: border-box;
+}
+
+.attribute-guide-box p:last-child,
+.attribute-guide-note p:last-child {
+    border-bottom: 0;
+}
+
+.attribute-guide-note p {
+    min-height: 30px;
+}
+
+.attribute-guide-icon,
+.attribute-guide-no-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.attribute-guide-icon {
+    object-fit: contain;
+}
+
+.attribute-guide-no-icon {
+    display: inline-block;
+}
+
+.attribute-guide-page strong {
+    font-weight: 800;
 }
 
 .card-book-slot {
@@ -1099,17 +1291,22 @@ textarea {
     place-items: center;
     width: 80px;
     height: 80px;
+    padding: 4px;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.24);
     font-size: 18px;
     font-weight: 900;
     line-height: 1;
+    box-sizing: border-box;
 }
 
 .card-book-icon {
     grid-area: 1 / 1;
+    display: block;
     width: 100%;
     height: 100%;
+    max-width: 72px;
+    max-height: 72px;
     object-fit: contain;
 }
 
@@ -1128,7 +1325,7 @@ textarea {
     position: absolute;
     left: 50%;
     bottom: calc(100% + 12px);
-    display: block;
+    display: none;
     width: 300px;
     height: 90px;
     min-height: 0;
@@ -1221,6 +1418,9 @@ textarea {
 
 .card-book-preview-name.fire-attribute-name,
 .card-book-preview-name.machine-attribute-name,
+.card-book-preview-name.electric-attribute-name,
+.card-book-preview-name.control-attribute-name,
+.card-book-preview-name.management-attribute-name,
 .card-book-preview-name.material-attribute-name {
     display: flex;
     align-items: center;
@@ -1231,6 +1431,18 @@ textarea {
 .card-book-preview-name.fire-attribute-name,
 .card-book-preview-name.machine-attribute-name {
     color: #d63832;
+}
+
+.card-book-preview-name.electric-attribute-name {
+    color: #d88900;
+}
+
+.card-book-preview-name.control-attribute-name {
+    color: #1677c8;
+}
+
+.card-book-preview-name.management-attribute-name {
+    color: #d88900;
 }
 
 .card-book-preview-name.material-attribute-name {
@@ -1345,8 +1557,8 @@ textarea {
     }
 
     .card-book-title-pill {
-        width: 104px;
-        font-size: 15px;
+        margin-top: -4px;
+        border-radius: 50px;
     }
 
     .card-book-top-spacer {
@@ -1666,11 +1878,65 @@ textarea {
     opacity: 0;
 }
 
+.select.heal-player1 > .player2 .selected-card-info,
+.select.heal-player1 > .player2 .selected-card-info-remote,
+.select.heal-player1 > .player2 .attack-card-display,
+.select.heal-player1 > .player2 .attack-total-display,
+.select.heal-player1 > .player2 .defense-card-list,
+.select.heal-player1 > .player2 .defense-card-display,
+.select.heal-player1 > .player2 h3,
+.select.heal-player2 > .player1 .selected-card-info,
+.select.heal-player2 > .player1 .selected-card-info-remote,
+.select.heal-player2 > .player1 .attack-card-display,
+.select.heal-player2 > .player1 .attack-total-display,
+.select.heal-player2 > .player1 .defense-card-list,
+.select.heal-player2 > .player1 .defense-card-display,
+.select.heal-player2 > .player1 h3 {
+    display: none !important;
+}
+
 .hand-area {
     display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    width: 647px;
+    max-width: calc(100% - 28px);
     margin-left: 14px;
     gap: 1px;
     margin-top: 5px;
+}
+
+.screen-area {
+    --hand-card-width: 80px;
+    --hand-card-height: 104px;
+    --hand-gap: 1px;
+    --hand-row-width: 647px;
+}
+
+.screen-area.magic-row-attach {
+    display: grid;
+    grid-template-columns: repeat(8, var(--hand-card-width));
+    grid-auto-rows: var(--hand-card-height);
+    gap: var(--hand-gap);
+    align-items: start;
+    justify-content: start;
+    width: var(--hand-row-width);
+    max-width: calc(100% - 28px);
+    min-height: calc((var(--hand-card-height) * 2) + var(--hand-gap));
+    margin-left: 14px;
+}
+
+.screen-area.magic-row-attach .hand-area,
+.screen-area.magic-row-attach .magic-hand-area {
+    display: contents;
+}
+
+.screen-area.magic-row-attach .hand-card {
+    width: var(--hand-card-width);
+}
+
+.screen-area.magic-row-attach .magic-card {
+    justify-self: end;
 }
 
 .waiting-hand-placeholder {
@@ -1687,15 +1953,16 @@ textarea {
     width: 80px;
     height: 80px;
     box-sizing: border-box;
-    border: 2px solid rgba(233, 255, 242, 0.7);
     background: #008f6f;
 }
 
 .card-info-panel {
     display: grid;
     grid-template-columns: 86px 1fr;
+    grid-template-rows: minmax(86px, auto);
     width: 300px;
-    height: 90px;
+    min-height: 90px;
+    height: auto;
     margin: 12px auto 0;
     overflow: hidden;
     border: 4.5px solid #55bb99;
@@ -1735,14 +2002,28 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: start;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-height: 0;
     background: #7d8987;
     border-right: 4.5px solid #55bb99;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .card-info-image img {
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.card-info-panel.choubo-card-info .card-info-image img,
+.card-info-panel.roppou-card-info .card-info-image img {
+    object-fit: contain;
+    background: #eef8df;
 }
 
 .card-info-body {
@@ -1752,7 +2033,7 @@ textarea {
 }
 
 .card-info-panel.has-description .card-info-body {
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: 30px 30px 26px;
 }
 
 .card-info-name {
@@ -1786,12 +2067,13 @@ textarea {
     overflow: hidden;
     background: #efffe2;
     color: #315244;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     box-sizing: border-box;
+    border-top: 1px solid rgba(85, 187, 153, 0.55);
 }
 
 
@@ -1813,6 +2095,9 @@ textarea {
 
 .card-info-name.fire-attribute-name,
 .card-info-name.machine-attribute-name,
+.card-info-name.electric-attribute-name,
+.card-info-name.control-attribute-name,
+.card-info-name.management-attribute-name,
 .card-info-name.material-attribute-name {
     gap: 4px;
 }
@@ -1821,6 +2106,21 @@ textarea {
 .card-info-name.machine-attribute-name {
     color: #d63832;
     -webkit-text-fill-color: #d63832;
+}
+
+.card-info-name.electric-attribute-name {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
+}
+
+.card-info-name.control-attribute-name {
+    color: #1677c8;
+    -webkit-text-fill-color: #1677c8;
+}
+
+.card-info-name.management-attribute-name {
+    color: #d88900;
+    -webkit-text-fill-color: #d88900;
 }
 
 .card-info-name.material-attribute-name {
@@ -1833,7 +2133,10 @@ textarea {
     flex: 0 0 1em;
     width: 1em !important;
     height: 1em !important;
+    max-width: 1em !important;
+    max-height: 1em !important;
     object-fit: contain;
+    vertical-align: -0.12em;
 }
 
 .card-info-effect {
@@ -2039,6 +2342,7 @@ textarea {
 
 .player1 h3 {
     position: relative;
+    z-index: 26;
     text-align: center;
     margin-top: 20px;
     color: #008f6f;
@@ -2066,6 +2370,7 @@ textarea {
 
 .player2 h3 {
     position: relative;
+    z-index: 26;
     text-align: center;
     color: #008f6f;
     background-color: #eeeeee;
@@ -2111,6 +2416,11 @@ textarea {
 .status {
     position: relative;
     width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+    flex: 0 0 300px;
+    height: 42px;
+    min-height: 42px;
     box-sizing: border-box;
     background-color: #eeeeee;
     border-color: #aaaaaa;
@@ -2141,13 +2451,15 @@ textarea {
 }
 
 .status p {
-    flex: 1 1 auto;
+    flex: 0 1 118px;
+    width: 118px;
     min-width: 0;
     max-width: 118px;
     margin: 0 4px 0 0 !important;
     white-space: nowrap;
     overflow: hidden;
     font-size: 26px;
+    line-height: 1;
 }
 
 .status-resource {
@@ -2236,28 +2548,20 @@ textarea {
 
 @keyframes knockout-rise-panel {
     0% {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 0;
+        transform: translateY(96px);
     }
-    55% {
+    12% {
         opacity: 1;
-        transform: translateY(-58px);
+        transform: translateY(78px);
+    }
+    78% {
+        opacity: 1;
+        transform: translateY(-46px);
     }
     100% {
         opacity: 0;
-        transform: translateY(-132px);
-    }
-}
-
-@keyframes knockout-rise-text {
-    0% {
-        transform: translateY(18px) scale(1.12);
-    }
-    40% {
-        transform: translateY(-38px) scale(1.08);
-    }
-    100% {
-        transform: translateY(-118px) scale(1.02);
+        transform: translateY(-92px);
     }
 }
 
@@ -2275,6 +2579,17 @@ textarea {
         opacity: 0;
         transform: scale(0.78) rotate(4deg);
         filter: blur(1.5px) brightness(0.8);
+    }
+}
+
+@keyframes unknown-card-pulse {
+    from {
+        opacity: 0.72;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.04);
     }
 }
 
@@ -2397,33 +2712,34 @@ textarea {
     z-index: 4;
     flex: 0 0 34px;
     width: 34px;
+    height: 34px;
     margin: 17px -5px 0;
     text-align: center;
-    font-size: 34px;
+    font-size: 0;
     line-height: 1;
     font-weight: 900;
-    color: #d03030;
-    text-shadow:
-        1px 0 #fff,
-        -1px 0 #fff,
-        0 1px #fff,
-        0 -1px #fff;
+    color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    text-shadow: none;
     transform: none;
     transition: transform 0.2s ease;
     pointer-events: none;
 }
 
 .attack-arrow.arrow-down {
+    background-image: url("images/ui/right.png");
     transform: none;
 }
 
 .attack-arrow.arrow-up {
+    background-image: url("images/ui/left.png");
     transform: none;
 }
 
 .attack-arrow.arrow-self {
-    color: #ff1744;
-    font-size: 34px;
+    background-image: url("images/ui/right.png");
     transform: none;
     animation: none;
 }
@@ -2455,6 +2771,13 @@ textarea {
 
 #game-screen {
     position: relative;
+    height: 100%;
+    min-height: 0;
+}
+
+.gameoya {
+    height: 100%;
+    min-height: 0;
 }
 
 .game-top-bar {
@@ -2861,7 +3184,9 @@ textarea {
 
     .attack-arrow {
         margin: 0;
-        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        font-size: 0;
     }
 
     .attack-arrow.arrow-down,
@@ -2894,7 +3219,9 @@ textarea {
 
     .attack,
     .heal,
+    .mpheal,
     .defense,
+    .special,
     .magic,
     .magic-card {
         width: 52px;
@@ -2903,7 +3230,9 @@ textarea {
 
     .attack img,
     .heal img,
+    .mpheal img,
     .defense img,
+    .special img,
     .magic img,
     .magic-card img {
         width: 52px;
@@ -2980,9 +3309,14 @@ textarea {
     .result-panel {
         width: min(92vw, 260px);
         min-height: 110px;
-        margin-top: 30px;
+        margin-top: 0;
         padding: 12px 16px;
         border-radius: 22px;
+    }
+
+    .player-result-active .damage-result-display {
+        top: 32px;
+        width: min(260px, calc(100% - 8px));
     }
 
     .result-value {
@@ -3062,15 +3396,17 @@ textarea {
         overflow: hidden;
     }
 
-    #game-screen[style*="display: block"] {
+    #game-screen[style*="display: block"],
+    #game-screen:not([style*="display: none"]) {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        align-content: start;
+        grid-template-rows: 28px 226px 5px minmax(148px, max-content) minmax(0, 1fr) 30px;
+        align-content: stretch;
         column-gap: 26px;
         row-gap: 6px;
         height: 100dvh;
         min-height: 0;
-        padding: 10px 10px 46px;
+        padding: 10px 10px 0;
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
@@ -3206,15 +3542,20 @@ textarea {
         border-radius: 6px;
     }
 
+    .tutorial-overlay.defense-confirm-mode ~ .select .tutorial-player-focus::after {
+        bottom: 5px;
+    }
+
     .attack-arrow {
         position: absolute;
-        top: 41px;
+        top: 35px;
         left: 50%;
         z-index: 4;
         width: 26px;
+        height: 26px;
         margin: 0;
-        color: #ff4f84;
-        font-size: 30px;
+        color: transparent;
+        font-size: 0;
         line-height: 1;
         transform: translateX(-50%) !important;
         text-shadow: none;
@@ -3315,23 +3656,43 @@ textarea {
         box-sizing: border-box;
     }
 
+    #my-screen.magic-row-attach,
+    #enemy-screen.magic-row-attach {
+        --hand-card-width: 52px;
+        --hand-card-height: 76px;
+        --hand-gap: 5px;
+        --hand-row-width: calc((52px * 6) + (5px * 5));
+        grid-template-columns: repeat(6, var(--hand-card-width));
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+    }
+
     #my-screen.hand-screen-hidden,
     #enemy-screen.hand-screen-hidden {
         display: none;
     }
 
     .hand-area {
-        justify-content: flex-start;
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
         align-content: flex-start;
         gap: 5px 7px;
         min-height: 148px;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: visible;
         margin: 0;
-        padding: 2px 0 0;
+        padding: 2px 2px 0;
     }
 
     .attack,
     .heal,
-    .defense {
+    .mpheal,
+    .defense,
+    .special {
         width: 52px;
     }
 
@@ -3352,7 +3713,9 @@ textarea {
 
     .attack img,
     .heal img,
-    .defense img {
+    .mpheal img,
+    .defense img,
+    .special img {
         width: 52px;
         height: 52px;
     }
@@ -3389,13 +3752,13 @@ textarea {
     }
 
     .game-bottom-bar {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        position: static;
+        grid-column: 1 / -1;
+        grid-row: 6;
+        align-self: end;
         z-index: 30;
         height: 30px;
-        margin: 0;
+        margin: 0 -10px;
         padding: 0 8px 0 22px;
     }
 
@@ -3414,6 +3777,9 @@ textarea {
     .status,
     .status2 {
         width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        flex: 0 0 auto;
         min-height: 30px;
         height: 30px;
         margin: 0;
@@ -3478,6 +3844,8 @@ textarea {
     }
 
     .status p {
+        flex: 0 1 132px;
+        width: 132px;
         max-width: 132px;
         margin-right: 8px !important;
         font-size: 26px;
@@ -3644,7 +4012,7 @@ textarea {
     }
 
     .card-book-popup .card-book-close-button::before {
-        content: "×";
+        content: "\00d7";
         display: block;
         font-size: 30px;
         font-weight: 900;
@@ -3667,6 +4035,8 @@ textarea {
     }
 
     .card-book-popup .card-book-sidebar {
+        grid-column: 1;
+        grid-row: auto;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 7px;
         padding-top: 0;
@@ -3679,12 +4049,13 @@ textarea {
     }
 
     .card-book-featured {
+        grid-column: 1;
+        grid-row: auto;
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 92px;
         padding: 4px;
-        border: 4px solid #000;
         background: transparent;
         box-sizing: border-box;
     }
@@ -3704,10 +4075,16 @@ textarea {
     }
 
     .card-book-popup .card-book-play-area {
+        grid-column: 1;
+        grid-row: auto;
         min-height: 0;
         padding: 10px 12px 28px;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+
+    .card-book-popup.is-attribute-guide .card-book-play-area {
+        padding-top: 4px;
     }
 
     .card-book-popup .card-book-container {
@@ -3719,11 +4096,45 @@ textarea {
         justify-content: stretch;
     }
 
+    .card-book-popup .card-book-container.attribute-guide-container {
+        max-width: 100%;
+    }
+
+    .attribute-guide-page {
+        gap: 14px;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .attribute-guide-box p,
+    .attribute-guide-note p {
+        align-items: flex-start;
+        min-height: 30px;
+        padding: 5px 7px;
+    }
+
+    .attribute-guide-icon,
+    .attribute-guide-no-icon {
+        flex-basis: 18px;
+        width: 18px;
+        height: 18px;
+        margin-top: 1px;
+    }
+
     .card-book-popup .card-book-slot,
     .card-book-popup .card-book-icon-wrap {
         width: 100%;
         height: auto;
         aspect-ratio: 1 / 1;
+    }
+
+    .card-book-popup .card-book-icon-wrap {
+        padding: 5px;
+    }
+
+    .card-book-popup .card-book-icon {
+        max-width: 100%;
+        max-height: 100%;
     }
 
     .card-book-popup .card-book-slot {

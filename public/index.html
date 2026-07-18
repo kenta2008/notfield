@@ -39,6 +39,7 @@
                         <div><dt>ゲームデザイン</dt><dd>ひろと</dd></div>
                         <div><dt>プログラム</dt><dd>けんた<br>そら</dd></div>
                         <div><dt>画像・音源素材</dt><dd><a href="https://soundeffect-lab.info/" target="_blank" rel="noopener noreferrer">効果音ラボ</a></dd></div>
+                        <div><dt>参考元ゲーム</dt><dd><a href="https://godfield.net/" target="_blank" rel="noopener noreferrer">Godfield</a></dd></div>
                     </dl>
                 </div>
                 <footer class="credit-bottom-bar">　　</footer>
@@ -83,13 +84,17 @@
                         </div>
                         <div class="card-book-layout">
                             <aside class="card-book-sidebar" aria-label="カードフィルター">
+                                <button class="card-book-filter" type="button" data-filter="attribute-guide">属性</button>
                                 <button class="card-book-filter is-active" type="button" data-filter="all">すべて</button>
                                 <button class="card-book-filter" type="button" data-filter="attack">攻撃</button>
                                 <button class="card-book-filter" type="button" data-filter="defense">守備</button>
                                 <button class="card-book-filter" type="button" data-filter="heal">回復</button>
                                 <button class="card-book-filter" type="button" data-filter="magic">魔法</button>
                                 <button class="card-book-filter" type="button" data-filter="element-machine">機械</button>
+                                <button class="card-book-filter" type="button" data-filter="element-electric">電気</button>
+                                <button class="card-book-filter" type="button" data-filter="element-control">制御</button>
                                 <button class="card-book-filter" type="button" data-filter="element-material">物質</button>
+                                <button class="card-book-filter" type="button" data-filter="element-management">経営</button>
                             </aside>
                             <div id="card-book-featured" class="card-book-featured" aria-live="polite"></div>
                             <section class="card-book-play-area" aria-label="カード一覧">
@@ -121,7 +126,7 @@
                         <h3 id="player1-name-title">player1</h3>
                         <div id="battle-log-player1" class="battle-log"></div>
                     </div>
-                    <div id="attack-arrow" class="attack-arrow">&rarr;</div>
+                    <div id="attack-arrow" class="attack-arrow arrow-down" aria-label="攻撃方向"></div>
                     <div class="player2">
                         <h3 id="player2-name-title">player2</h3>
                         <div id="battle-log-player2" class="battle-log"></div>

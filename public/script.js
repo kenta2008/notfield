@@ -3,6 +3,16 @@ import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/
 
 
 
+const firebaseConfig = {
+    apiKey: "AIzaSyAKZp4qCuyS77TT8KqFmvEc5WqE_lajjEU",
+    authDomain: "notfield.firebaseapp.com",
+    databaseURL: "https://notfield-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "notfield",
+    storageBucket: "notfield.firebasestorage.app",
+    messagingSenderId: "630382594114",
+    appId: "1:630382594114:web:e98a5234220195f3f845db"
+};
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
 const myhp = document.getElementById("myhp");
@@ -2484,30 +2494,6 @@ function renderDefenseCardDisplay(player, targetDiv) {
         listDiv.appendChild(dispDiv);
     });
     displayTargetDiv.appendChild(listDiv);
-}
-
-function renderRevealedDefenseSequence(targetDiv, cards = []) {
-    if (!targetDiv || !Array.isArray(cards) || cards.length === 0) return 0;
-
-    targetDiv
-        .querySelectorAll(".revealed-defense-sequence, .revealed-defense-card")
-        .forEach(el => el.remove());
-
-    const listDiv = document.createElement("div");
-    listDiv.className = "defense-card-list revealed-defense-sequence";
-    targetDiv.appendChild(listDiv);
-
-    cards.forEach((card, index) => {
-        setTimeout(() => {
-            if (!listDiv.isConnected) return;
-            const dispDiv = document.createElement("div");
-            dispDiv.className = "defense-card-display revealed-defense-card";
-            dispDiv.innerHTML = renderCardInfoBlock(card, card.battleLabel || getDefenseCardBattleLabel(card), 40, true);
-            listDiv.appendChild(dispDiv);
-        }, index * DEFENSE_REVEAL_INTERVAL_MS);
-    });
-
-    return cards.length * DEFENSE_REVEAL_INTERVAL_MS;
 }
 
 function renderRevealedDefenseSequence(targetDiv, cards = []) {

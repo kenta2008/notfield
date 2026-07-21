@@ -1,7 +1,17 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAKZp4qCuyS77TT8KqFmvEc5WqE_lajjEU",
+    authDomain: "notfield.firebaseapp.com",
+    databaseURL: "https://notfield-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "notfield",
+    storageBucket: "notfield.firebasestorage.app",
+    messagingSenderId: "630382594114",
+    appId: "1:630382594114:web:e98a5234220195f3f845db"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); 
@@ -43,7 +53,7 @@ const CARDS = {
     //攻撃系
     pencil: { name:"シャーペン", type:"attack", value: 10, description:"相手に攻撃力10を与えることができる。", imgSrc: "images/attack/pen.png"},
     hacking: { name:"ハッキング", type:"attack", element:"control", value: 0, description:"相手を3ターンランダムに行動させることができる。", imgSrc: "images/attack/kontorora.png"},
-    mojibake: { name:"文字化けファイル", type:"attack", value: 0, description:"相手の手札からカードを一枚消すことができる。", imgSrc: "images/attack/mojibake.png"},
+    mojibake: { name:"文字化けファイル", type:"attack", element:"control", value: 0, description:"相手の手札からカードを一枚消すことができる。", imgSrc: "images/attack/mojibake.png"},
     kusaifuku: { name:"臭い服", type:"attack", value: 5, description:"部屋干しのにおいが臭すぎて気絶。5ダメージあたることができる。", imgSrc: "images/attack/kusaifuku.png"},
     gojyuukyuu: { name:"59点のテスト", type:"attack", value: 6, description:"60点から合格です。", imgSrc: "images/attack/59ten.png"},
     kanningu: { name:"カンニング", type:"attack", value: 12, hitRate: 0.3, description:"30%の確率で12ダメージを与えることができる。", imgSrc: "images/attack/kanningu.png"},
@@ -62,9 +72,10 @@ const CARDS = {
     ramen: { name:"カップラーメン", type:"heal", value: 3, description:"3HP回復することができる", imgSrc: "images/heal/ramen.png"},
     megusuri: { name:"目薬", type:"mpheal", value: 5, description:"5MP回復することができる。", imgSrc: "images/heal/megusuri.png"},
     ramune: { name:"ラムネ", type:"mpheal", value: 10, description:"10MP回復することができる。", imgSrc: "images/heal/ramune.png"},
+    ryougae: { name:"両替", type:"special", element:"management", value: 0, exchange: true, exchangeValue: 15, description:"HPとMPを1対1で交換できる。", imgSrc: "images/special/ryougae.png"},
     //防御
     enadori: { name:"エナジードリンク", type:"magic", value: 2, mpCost: 7, description:"7MPを消費して攻撃力を2倍にする", imgSrc: "images/heal/enadori.png"},
-    harapeko: { name:"抵抗器", type:"defense", value: 0, reductionRate: 0.6, description:"受ける攻撃を60%減らす", imgSrc: "images/defense/teikou.png"},
+    harapeko: { name:"抵抗器", type:"defense", element:"control", value: 0, reductionRate: 0.6, description:"受ける攻撃を60%減らす", imgSrc: "images/defense/teikou.png"},
     hakui: { name:"白衣", type:"defense", element:"material", value: 5, materialDefenseValue: 10, description:"物質属性の攻撃には守10、それ以外には守5", imgSrc: "images/defense/hakui.png"},
     roppou: { name:"六法全書", type:"defense", element:"management", value: 0, attributeNeutralizer: true, description:"攻撃の属性効果を消し、普通の守備で防げるようにする", imgSrc: "images/defense/roppou.png"},
     anzenmegane: { name:"安全メガネ", type:"defense", value: 4, description:"攻撃を防ぐことができる", imgSrc: "images/defense/anzenmegane.png"},
@@ -86,6 +97,7 @@ const INITIAL_MP = 20;
 const MAGIC_CARD_KEY = "enadori";
 const TIME_CARD_KEY = "timecard";
 const RELAY_CARD_KEY = "relay";
+const RYOUGAE_CARD_KEY = "ryougae";
 const FIXED_CARD_DRAW_RATES = {
     enadori: 1 / 65,
     hacking: 1 / 50,
@@ -244,6 +256,7 @@ let lastRenderedSelectedCardId = null;
 let controlEffectGlobal = null;
 let controlledActionInProgress = false;
 let lastControlledActionKey = null;
+let exchangeDraft = null;
 const CONTROLLED_ROUND_DELAY_MS = 1950;
 const CARD_DRAW_SOUND_SRC = "se/card.mp3";
 const TURN_SOUND_SRC = "se/turn.mp3";
@@ -279,7 +292,7 @@ let freshHandIndexesGlobal = {
     player2: new Set()
 };
 
-const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake", "choubo", TIME_CARD_KEY, RELAY_CARD_KEY]);
+const SPECIAL_ITEM_CARD_KEYS = new Set(["hacking", "mojibake", "choubo", RYOUGAE_CARD_KEY, TIME_CARD_KEY, RELAY_CARD_KEY]);
 
 const player1Div = document.querySelector(".player1");
 const player2Div = document.querySelector(".player2");
@@ -989,6 +1002,7 @@ function clearSelectedCardState() {
     selectedCardIndex = null;
     selectedBoostCardIndexes = [];
     selectedHandMagicCardIndexes = [];
+    exchangeDraft = null;
 }
 
 function clearDisplayElements(selector, divs = getPlayerDisplayDivs()) {
@@ -1370,6 +1384,151 @@ function setRoleHp(role, hp) {
     }
 }
 
+function syncResourceText() {
+    myhp.textContent = (myPlayerRole === "player1") ? mycurrenthp : tekicurrenthp;
+    tekihp.textContent = (myPlayerRole === "player1") ? tekicurrenthp : mycurrenthp;
+    player1Mp.textContent = (myPlayerRole === "player1") ? mycurrentmp : tekicurrentmp;
+    player2Mp.textContent = (myPlayerRole === "player1") ? tekicurrentmp : mycurrentmp;
+}
+
+function initExchangeDraft(role = myPlayerRole) {
+    if (!role) return null;
+    const exchangeValue = CARDS[RYOUGAE_CARD_KEY]?.exchangeValue || 0;
+    if (!exchangeDraft || exchangeDraft.role !== role) {
+        exchangeDraft = {
+            role,
+            hp: getRoleHp(role),
+            mp: getRoleMp(role),
+            startHp: getRoleHp(role),
+            startMp: getRoleMp(role),
+            yen: exchangeValue,
+            startYen: exchangeValue
+        };
+    }
+    return exchangeDraft;
+}
+
+function hasExchangeDraftChanged() {
+    return !!exchangeDraft
+        && (exchangeDraft.hp !== exchangeDraft.startHp
+            || exchangeDraft.mp !== exchangeDraft.startMp
+            || exchangeDraft.yen !== exchangeDraft.startYen);
+}
+
+function canConfirmExchangeDraft() {
+    return !!exchangeDraft && hasExchangeDraftChanged() && exchangeDraft.yen === 0;
+}
+
+function adjustExchangeDraft(resource, amount) {
+    const draft = initExchangeDraft(myPlayerRole);
+    if (!draft) return;
+
+    const absAmount = Math.abs(Number(amount) || 0);
+    if (absAmount <= 0) return;
+
+    if (resource === "hp" && amount > 0) {
+        const move = Math.min(absAmount, 99 - draft.hp, draft.yen);
+        draft.hp += move;
+        draft.yen -= move;
+    } else if (resource === "hp" && amount < 0) {
+        const move = Math.min(absAmount, draft.hp - 1, 99 - draft.yen);
+        draft.hp -= move;
+        draft.yen += move;
+    } else if (resource === "mp" && amount > 0) {
+        const move = Math.min(absAmount, 99 - draft.mp, draft.yen);
+        draft.mp += move;
+        draft.yen -= move;
+    } else if (resource === "mp" && amount < 0) {
+        const move = Math.min(absAmount, draft.mp, 99 - draft.yen);
+        draft.mp -= move;
+        draft.yen += move;
+    }
+
+    renderSelectedCardInfoV2();
+}
+
+function renderExchangePanel() {
+    const draft = initExchangeDraft(myPlayerRole);
+    if (!draft) return "";
+    const canConfirm = canConfirmExchangeDraft();
+    return `
+        <div class="exchange-panel" aria-label="HPとMPを両替">
+            <div class="exchange-controls exchange-controls-top">
+                <button type="button" data-exchange-resource="hp" data-exchange-amount="10">+10</button>
+                <button type="button" data-exchange-resource="mp" data-exchange-amount="10">+10</button>
+                <button type="button" data-exchange-resource="hp" data-exchange-amount="1">+1</button>
+                <button type="button" data-exchange-resource="mp" data-exchange-amount="1">+1</button>
+            </div>
+            <div class="exchange-status">
+                <span>HP</span><strong>${draft.hp}</strong>
+                <span>MP</span><strong>${draft.mp}</strong>
+                <span>残</span><strong>${draft.yen}</strong>
+            </div>
+            <div class="exchange-controls exchange-controls-bottom">
+                <button type="button" data-exchange-resource="hp" data-exchange-amount="-1">-1</button>
+                <button type="button" data-exchange-resource="mp" data-exchange-amount="-1">-1</button>
+                <button type="button" data-exchange-resource="hp" data-exchange-amount="-10">-10</button>
+                <button type="button" data-exchange-resource="mp" data-exchange-amount="-10">-10</button>
+            </div>
+            <button type="button" class="exchange-confirm-button" data-exchange-confirm="true"${canConfirm ? "" : " disabled"}>決定</button>
+        </div>
+    `;
+}
+
+function bindExchangePanel(infoDiv) {
+    const panel = infoDiv?.querySelector(".exchange-panel");
+    if (!panel) return;
+    panel.addEventListener("click", event => {
+        event.stopPropagation();
+        const button = event.target.closest("button");
+        if (!button || button.disabled) return;
+        if (button.dataset.exchangeConfirm === "true") {
+            confirmExchangeCard();
+            return;
+        }
+        adjustExchangeDraft(button.dataset.exchangeResource, Number(button.dataset.exchangeAmount));
+    });
+}
+
+function confirmExchangeCard() {
+    if (!gameStartedGlobal || !isMyTurnGlobal) return false;
+    if (pendingAttackGlobal > 0 || selectedCardIndex === null || getSelectedCardKey() !== RYOUGAE_CARD_KEY) return false;
+    const draft = initExchangeDraft(myPlayerRole);
+    if (!draft || !canConfirmExchangeDraft()) {
+        renderSelectedCardInfoV2();
+        return false;
+    }
+
+    isMyTurnGlobal = false;
+    setRoleHp(myPlayerRole, draft.hp);
+    setRoleMp(myPlayerRole, draft.mp);
+    syncResourceText();
+
+    const currentHand = getCurrentPlayerHand();
+    currentHand.splice(selectedCardIndex, 1);
+    reserveDrawForCurrentPlayer(1);
+
+    const actionResult = {
+        id: Date.now(),
+        player: myPlayerRole,
+        type: "exchange",
+        damage: 0,
+        message: "両替",
+        exchangeBeforeHp: draft.startHp,
+        exchangeBeforeMp: draft.startMp,
+        exchangeAfterHp: draft.hp,
+        exchangeAfterMp: draft.mp
+    };
+
+    selectedAttackTargetRole = getOpponentRole(myPlayerRole);
+    updateAttackTargetDisplay(myPlayerRole, selectedAttackTargetRole);
+    clearCardActionDisplays();
+    renderHands();
+    clearSelectedCardState();
+    sendGameState(getOpponentRole(myPlayerRole), 0, null, "", actionResult);
+    return true;
+}
+
 function getRoleDefense(role) {
     return role === myPlayerRole ? mydefense : tekidefense;
 }
@@ -1412,6 +1571,7 @@ function getCardActionLabel(card) {
     if (card.type === "heal") return `回 ${card.value}`;
     if (card.type === "mpheal") return `MP ${card.value}`;
     if (card.type === "defense") return getDefenseCardLabel(card);
+    if (card.type === "special" && card.exchange) return "両替";
     return "";
 }
 
@@ -1977,14 +2137,16 @@ const BOOST_LABEL = "&times;2";
 
 function getDisplayCardLabel(card) {
     if (!card) return "";
-    if (card === CARDS.enadori) return `${BOOST_LABEL} / ${card.mpCost}MP`;
+    if (card === CARDS.enadori) return BOOST_LABEL;
     if (card === CARDS.timecard) return "再行動";
     if (card === CARDS.relay) return "2連続";
+    if (card === CARDS.ryougae) return "両替";
     if (card.type === "attack") return `攻 ${card.value}`;
     if (card.type === "heal") return `回 ${card.value}`;
     if (card.type === "mpheal") return `MP ${card.value}`;
     if (card.type === "defense") return getDefenseCardLabel(card);
     if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
+    if (card.type === "special" && card.exchange) return "両替";
     return "";
 }
 
@@ -2024,18 +2186,22 @@ function renderCardInfoBlock(card, label, size = 40, showDescription = false) {
     const attributeMeta = getAttributeMeta(card?.element);
     const isChouboCard = card?.imgSrc?.includes("tyobo.png");
     const isRoppouCard = card?.imgSrc?.includes("roppou.png");
+    const hasMpCost = Number(card?.mpCost) > 0;
     const attributeIcon = attributeMeta
         ? `<img class="card-attribute-icon" src="${attributeMeta.icon}" alt="${attributeMeta.alt}">`
         : "";
     const attributeNameClass = attributeMeta ? ` ${attributeMeta.nameClass}` : "";
+    const effectHtml = hasMpCost
+        ? `<span class="card-info-main-effect">${label || ""}</span><span class="card-info-mp-cost-badge">消費<br>MP${card.mpCost}</span>`
+        : (label || "");
     return `
-        <div class="card-info-panel${showDescription ? " has-description" : ""}${isChouboCard ? " choubo-card-info" : ""}${isRoppouCard ? " roppou-card-info" : ""}">
+        <div class="card-info-panel${showDescription ? " has-description" : ""}${hasMpCost ? " mp-cost-card-info" : ""}${isChouboCard ? " choubo-card-info" : ""}${isRoppouCard ? " roppou-card-info" : ""}">
             <div class="card-info-image">
                 <img src="${card.imgSrc}" alt="${card.name}">
             </div>
             <div class="card-info-body">
                 <div class="card-info-name${attributeNameClass}"><span class="card-info-name-text">${card.name}</span>${attributeIcon}</div>
-                <div class="card-info-effect">${label || ""}</div>
+                <div class="card-info-effect">${effectHtml}</div>
                 ${showDescription ? `<div class="card-info-description">${card.description || "説明なし"}</div>` : ""}
             </div>
         </div>
@@ -2115,12 +2281,15 @@ function renderSelectedCardInfoV2() {
     const label = getDisplayCardLabel(card);
     const isSelfAttack = card.type === "attack" && selectedAttackTargetRole === myPlayerRole;
     infoDiv.classList.remove("self-attack-card-display");
+    const exchangeHtml = cardKey === RYOUGAE_CARD_KEY ? renderExchangePanel() : "";
     infoDiv.innerHTML = `
         <div>
             ${renderCardInfoBlock(card, label, 40, true)}
             ${comboEntries.map(entry => renderCardInfoBlock(entry.card, getComboCardLabel(entry.cardKey, entry.card), 34, true)).join("")}
+            ${exchangeHtml}
         </div>
     `;
+    if (cardKey === RYOUGAE_CARD_KEY) bindExchangePanel(infoDiv);
 
     if (card.type === "attack" && cardKey !== BOOST_CARD_KEY && card.value > 0) {
         const totalDiv = document.createElement("div");
@@ -2302,6 +2471,8 @@ window.selectCard = function(handIndex) {
     selectedCardIndex = handIndex;
     selectedBoostCardIndexes = [];
     selectedHandMagicCardIndexes = [];
+    exchangeDraft = null;
+    if (cardKey === RYOUGAE_CARD_KEY) initExchangeDraft(myPlayerRole);
     if (card.type === "attack") {
         setAttackTarget(getOpponentRole(myPlayerRole));
     } else if (card.type === "heal" || card.type === "mpheal") {
@@ -2510,30 +2681,6 @@ function renderRevealedDefenseSequence(targetDiv, cards = []) {
     return cards.length * DEFENSE_REVEAL_INTERVAL_MS;
 }
 
-function renderRevealedDefenseSequence(targetDiv, cards = []) {
-    if (!targetDiv || !Array.isArray(cards) || cards.length === 0) return 0;
-
-    targetDiv
-        .querySelectorAll(".revealed-defense-sequence, .revealed-defense-card")
-        .forEach(el => el.remove());
-
-    const listDiv = document.createElement("div");
-    listDiv.className = "defense-card-list revealed-defense-sequence";
-    targetDiv.appendChild(listDiv);
-
-    cards.forEach((card, index) => {
-        setTimeout(() => {
-            if (!listDiv.isConnected) return;
-            const dispDiv = document.createElement("div");
-            dispDiv.className = "defense-card-display revealed-defense-card";
-            dispDiv.innerHTML = renderCardInfoBlock(card, card.battleLabel || getDefenseCardBattleLabel(card), 40, true);
-            listDiv.appendChild(dispDiv);
-        }, index * DEFENSE_REVEAL_INTERVAL_MS);
-    });
-
-    return cards.length * DEFENSE_REVEAL_INTERVAL_MS;
-}
-
 function renderDamageResultDisplay(result) {
     if (!result || !result.player) return;
     if (result.id && result.id === lastRenderedDamageResultId) return;
@@ -2575,6 +2722,25 @@ function placeDamageResultDisplay(targetDiv, dispDiv) {
     targetDiv.appendChild(dispDiv);
 }
 
+function placeKnockoutResultDisplay(targetDiv, dispDiv) {
+    if (!targetDiv || !dispDiv) return;
+
+    const nameEl = targetDiv.querySelector("h3");
+    targetDiv.appendChild(dispDiv);
+    if (!nameEl) return;
+
+    requestAnimationFrame(() => {
+        const nameRect = nameEl.getBoundingClientRect();
+        const targetRect = targetDiv.getBoundingClientRect();
+        const top = Math.max(0, nameRect.bottom - targetRect.top + 8);
+        const panelWidth = Math.min(374, Math.max(300, targetDiv.clientWidth + 74));
+        const left = Math.max(0, (targetDiv.clientWidth - panelWidth) / 2);
+        dispDiv.style.setProperty("--knockout-result-top", `${top}px`);
+        dispDiv.style.setProperty("--knockout-result-left", `${left}px`);
+        dispDiv.style.setProperty("--knockout-result-width", `${panelWidth}px`);
+    });
+}
+
 function renderResultPanelDisplay(result) {
     if (!result || !result.player) {
         clearTimeout(resultDisplayTimer);
@@ -2607,6 +2773,7 @@ function renderResultPanelDisplay(result) {
 
         const isHeal = result.type === "heal";
         const isMpHeal = result.type === "mpheal";
+        const isExchange = result.type === "exchange" || result.message === "両替";
         const isSafe = !isHeal && !isMpHeal && result.damage <= 0;
         const isReflection = result.type === "reflect" || result.message === "反射";
         const isKnockout = result.knockout || result.message === "撃沈";
@@ -2621,6 +2788,43 @@ function renderResultPanelDisplay(result) {
         }
 
         targetDiv.classList.add("player-result-active");
+
+        if (isExchange) {
+            const beforeHp = result.exchangeBeforeHp ?? result.exchangeAfterHp ?? getRoleHp(result.player);
+            const beforeMp = result.exchangeBeforeMp ?? result.exchangeAfterMp ?? getRoleMp(result.player);
+            const afterHp = result.exchangeAfterHp ?? getRoleHp(result.player);
+            const afterMp = result.exchangeAfterMp ?? getRoleMp(result.player);
+            const dispDiv = document.createElement("div");
+            dispDiv.className = "damage-result-display exchange-result-display";
+            dispDiv.innerHTML = `
+                <div class="exchange-result-panel">
+                    <div class="exchange-result-row exchange-before-row">
+                        <span>HP</span><strong>${beforeHp}</strong>
+                        <span>MP</span><strong>${beforeMp}</strong>
+                    </div>
+                </div>
+            `;
+            placeDamageResultDisplay(targetDiv, dispDiv);
+            setTimeout(() => {
+                if (!dispDiv.isConnected) return;
+                const panel = dispDiv.querySelector(".exchange-result-panel");
+                if (!panel) return;
+                panel.innerHTML = `
+                    <div class="exchange-result-row exchange-after-row">
+                        <span>HP</span><strong>${afterHp}</strong>
+                        <span>MP</span><strong>${afterMp}</strong>
+                    </div>
+                `;
+            }, 1000);
+            setTimeout(() => {
+                dispDiv.remove();
+                targetDiv.classList.remove("player-result-active");
+                if (damageResultGlobal?.id === renderedResultId) {
+                    update(gameRoomRef, { damage_result: null });
+                }
+            }, RESULT_DISPLAY_MS + 1000);
+            return;
+        }
 
         const messageText = result.message && result.message !== "即死" && !isKnockout ? result.message : "";
         const valueText = messageText || (isHeal || isMpHeal ? `+${result.amount}` : (isSafe ? "無事" : result.damage));
@@ -2643,11 +2847,13 @@ function renderResultPanelDisplay(result) {
         }
         setTimeout(() => {
             if (isKnockout) {
+                dispDiv.classList.add("knockout-result-display");
                 dispDiv.innerHTML = `
                     <div class="result-panel knockout-result knockout-rise-result">
                         <div class="result-value">撃沈</div>
                     </div>
                 `;
+                placeKnockoutResultDisplay(targetDiv, dispDiv);
                 setTimeout(() => {
                     dispDiv.remove();
                     targetDiv.classList.remove("player-result-active");
@@ -2767,6 +2973,11 @@ window.executeCard = function() {
     const card = CARDS[cardKey];
     const comboEntriesForAction = getSelectedComboEntries();
     const usesTimeCardForAction = comboEntriesForAction.some(entry => entry.cardKey === TIME_CARD_KEY);
+
+    if (cardKey === RYOUGAE_CARD_KEY) {
+        confirmExchangeCard();
+        return;
+    }
 
     // addLog(`ユーザー:${card.name}`);
     isMyTurnGlobal = false;
@@ -3143,6 +3354,7 @@ function renderHands() {
         if (type === "mpheal") return `MP${value}`;
         if (type === "defense") return `守${value}`;
         if (type === "special" && card?.drawCards) return `+${card.drawCards}枚`;
+        if (type === "special" && card?.exchange) return "両替";
         return value || "";
     }
 
@@ -3198,6 +3410,9 @@ function renderHands() {
             btn.dataset.cardType = card.type;
             btn.dataset.cardKey = cardKey;
             btn.dataset.handIndex = String(handIndex);
+            if (!destroyed && role === myPlayerRole && pendingAttackGlobal <= 0 && selectedCardIndex === Number(handIndex)) {
+                btn.classList.add("action-selected");
+            }
             const isDefenseSelected = pendingAttackGlobal > 0
                 && card.type === "defense"
                 && (selectedDefenseCards[role] || []).some(item => item.handIndex === handIndex);
@@ -3251,6 +3466,8 @@ function renderHands() {
                 ? "再行動"
                 : cardKey === RELAY_CARD_KEY
                 ? "2連続"
+                : cardKey === RYOUGAE_CARD_KEY
+                ? "両替"
                 : (card.type === "defense" && card.attributeNeutralizer)
                 ? "属性無効"
                 : (card.type === "defense" && card.reflectAttack
@@ -3951,6 +4168,7 @@ function getBookCardValueLabel(card) {
     if (card.type === "heal") return card.value || "-";
     if (card.type === "mpheal") return `MP${card.value || "-"}`;
     if (card.type === "special" && card.drawCards) return `+${card.drawCards}枚`;
+    if (card.type === "special" && card.exchange) return "両替";
     return "-";
 }
 

@@ -4,7 +4,7 @@
     ".write": false,
     "gameRoom": {
       ".read": true,
-      ".write": true,
+      ".write": "newData.exists()",
       ".validate": "newData.hasChildren(['player1_hp', 'player2_hp', 'player1_mp', 'player2_mp', 'player1_def', 'player2_def', 'player1_hand', 'player2_hand', 'pending_attack', 'turn', 'round'])",
 
       "player1_hp": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99" },
@@ -32,21 +32,53 @@
         "$i": { ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
       "player1_magic_hand": {
-        ".validate": "!newData.exists() || true",
-        "$i": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
+        "$i": { ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
       "player2_magic_hand": {
-        ".validate": "!newData.exists() || true",
-        "$i": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
+        "$i": { ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" }
       },
 
       "player1_def_cards": {
-        ".validate": "!newData.exists() || true",
-        "$i": { "$other": { ".validate": true } }
+        "$i": {
+          ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.hasChildren(['name', 'type', 'imgSrc'])",
+          "cardKey": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/))" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "type": { ".validate": "newData.isString() && newData.val() == 'defense'" },
+          "imgSrc": { ".validate": "newData.isString() && newData.val().length <= 160" },
+          "value": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+          "materialDefenseValue": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+          "reductionRate": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 1)" },
+          "reflectAttack": { ".validate": "!newData.exists() || newData.isBoolean()" },
+          "attributeNeutralizer": { ".validate": "!newData.exists() || newData.isBoolean()" },
+          "blocksElement": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/))" },
+          "blocksElements": {
+            "$j": { ".validate": "$j.matches(/^(0|[1-9])$/) && newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/)" }
+          },
+          "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
+          "battleLabel": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
+          "$other": { ".validate": false }
+        }
       },
       "player2_def_cards": {
-        ".validate": "!newData.exists() || true",
-        "$i": { "$other": { ".validate": true } }
+        "$i": {
+          ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.hasChildren(['name', 'type', 'imgSrc'])",
+          "cardKey": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/))" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "type": { ".validate": "newData.isString() && newData.val() == 'defense'" },
+          "imgSrc": { ".validate": "newData.isString() && newData.val().length <= 160" },
+          "value": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+          "materialDefenseValue": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+          "reductionRate": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 1)" },
+          "reflectAttack": { ".validate": "!newData.exists() || newData.isBoolean()" },
+          "attributeNeutralizer": { ".validate": "!newData.exists() || newData.isBoolean()" },
+          "blocksElement": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/))" },
+          "blocksElements": {
+            "$j": { ".validate": "$j.matches(/^(0|[1-9])$/) && newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/)" }
+          },
+          "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
+          "battleLabel": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
+          "$other": { ".validate": false }
+        }
       },
 
       "selected_card": {
@@ -65,8 +97,14 @@
         "randomPending": { ".validate": "!newData.exists() || newData.isBoolean()" },
         "controlled": { ".validate": "!newData.exists() || newData.isBoolean()" },
         "boosts": {
-          ".validate": "!newData.exists() || true",
-          "$i": { "$other": { ".validate": true } }
+          "$i": {
+            ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.hasChildren(['name', 'label', 'imgSrc'])",
+            "name": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "label": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
+            "imgSrc": { ".validate": "newData.isString() && newData.val().length <= 160" },
+            "$other": { ".validate": false }
+          }
         },
         "$other": { ".validate": false }
       },
@@ -97,8 +135,14 @@
         "relayRepeat": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 2)" },
         "repeatId": { ".validate": "!newData.exists() || newData.isNumber()" },
         "boosts": {
-          ".validate": "!newData.exists() || true",
-          "$i": { "$other": { ".validate": true } }
+          "$i": {
+            ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.hasChildren(['name', 'label', 'imgSrc'])",
+            "name": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "label": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
+            "imgSrc": { ".validate": "newData.isString() && newData.val().length <= 160" },
+            "$other": { ".validate": false }
+          }
         },
         "$other": { ".validate": false }
       },
@@ -109,16 +153,37 @@
         "player": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "attackPlayer": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
         "attackTarget": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'player1' || newData.val() == 'player2'))" },
-        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'heal' || newData.val() == 'mpheal' || newData.val() == 'reflect'))" },
+        "type": { ".validate": "!newData.exists() || (newData.isString() && (newData.val() == 'heal' || newData.val() == 'mpheal' || newData.val() == 'reflect' || newData.val() == 'exchange'))" },
         "damage": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "amount": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
         "rawDamage": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
         "message": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 20)" },
+        "exchangeBeforeHp": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
+        "exchangeBeforeMp": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
+        "exchangeAfterHp": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
+        "exchangeAfterMp": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 99)" },
         "instantDeath": { ".validate": "!newData.exists() || newData.isBoolean()" },
         "knockout": { ".validate": "!newData.exists() || newData.isBoolean()" },
         "usedDefenseCards": {
-          ".validate": "!newData.exists() || true",
-          "$i": { "$other": { ".validate": true } }
+          "$i": {
+            ".validate": "$i.matches(/^(0|[1-9]|1[0-9])$/) && newData.hasChildren(['name', 'type', 'imgSrc'])",
+            "cardKey": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/))" },
+            "name": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "type": { ".validate": "newData.isString() && newData.val() == 'defense'" },
+            "imgSrc": { ".validate": "newData.isString() && newData.val().length <= 160" },
+            "value": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+            "materialDefenseValue": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 999)" },
+            "reductionRate": { ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0 && newData.val() <= 1)" },
+            "reflectAttack": { ".validate": "!newData.exists() || newData.isBoolean()" },
+            "attributeNeutralizer": { ".validate": "!newData.exists() || newData.isBoolean()" },
+            "blocksElement": { ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/))" },
+            "blocksElements": {
+              "$j": { ".validate": "$j.matches(/^(0|[1-9])$/) && newData.isString() && newData.val().matches(/^[a-z_]{1,32}$/)" }
+            },
+            "description": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 240)" },
+            "battleLabel": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)" },
+            "$other": { ".validate": false }
+          }
         },
         "$other": { ".validate": false }
       },

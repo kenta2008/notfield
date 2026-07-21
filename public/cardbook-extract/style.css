@@ -1,0 +1,531 @@
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, "Yu Gothic", "Meiryo", sans-serif;
+    background: #56bb95;
+    color: #211a13;
+    user-select: none;
+}
+
+button {
+    font: inherit;
+}
+
+.card-book-page {
+    position: relative;
+    width: min(100vw, 1072px);
+    height: min(100vh, 720px);
+    margin: 0 auto;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 246, 178, 0.72), transparent 42%),
+        linear-gradient(180deg, #e1efd1 0%, #9fc78d 100%);
+    box-shadow: inset 0 0 0 5px #008f6f;
+}
+
+.card-book-top-bar,
+.card-book-bottom-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    height: 30px;
+    background: #008f6f;
+}
+
+.card-book-top-bar {
+    top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 3px 10px;
+}
+
+.card-book-bottom-bar {
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 96px;
+    color: #fff;
+    font-size: 20px;
+}
+
+.card-book-title-pill {
+    width: 150px;
+    height: 24px;
+    margin: 0;
+    border-radius: 50px;
+    background: #e9fff2;
+    color: #e25a4f;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 24px;
+    text-align: center;
+}
+
+.card-book-top-spacer {
+    justify-self: start;
+    width: 220px;
+    height: 24px;
+}
+
+.card-book-close-button {
+    justify-self: end;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.card-book-layout {
+    display: grid;
+    grid-template-columns: 168px minmax(0, 1fr);
+    grid-template-rows: 112px minmax(0, 1fr);
+    gap: 14px 18px;
+    width: 100%;
+    height: 100%;
+    padding: 60px 24px 46px;
+}
+
+.card-book-sidebar {
+    grid-row: 1 / 3;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding-top: 42px;
+}
+
+.card-book-filter {
+    width: 100%;
+    min-height: 48px;
+    border: 2px solid #fff7cf;
+    border-radius: 6px;
+    background: linear-gradient(#1677bd, #0c4f8e);
+    color: #fffdf2;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.card-book-filter:hover,
+.card-book-filter.is-active {
+    background: linear-gradient(#21a56d, #117346);
+}
+
+.card-book-featured {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
+    pointer-events: none;
+}
+
+.card-book-play-area {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 40px 40px 0;
+}
+
+.card-book-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 80px);
+    gap: 12px;
+    align-content: start;
+    justify-content: start;
+}
+
+.card-book-slot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    border: 0;
+    background: transparent;
+    color: #fff6cf;
+    cursor: pointer;
+    padding: 0;
+}
+
+.card-book-slot:hover,
+.card-book-slot:focus-visible {
+    z-index: 20;
+    outline: none;
+    transform: translateY(-2px);
+}
+
+.card-book-slot.is-selected .card-book-icon-wrap {
+    box-shadow: 0 0 0 3px #e9fff2, 0 0 0 5px #008f6f;
+}
+
+.card-book-icon-wrap {
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.24);
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.card-book-icon {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.card-book-fallback {
+    grid-area: 1 / 1;
+    display: grid;
+    place-items: center;
+    color: currentColor;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.card-book-preview {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 12px);
+    display: none;
+    width: 300px;
+    min-height: 90px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 8px) scale(0.96);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.card-book-slot:hover .card-book-preview,
+.card-book-slot:focus-visible .card-book-preview {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+}
+
+.card-info-panel {
+    display: grid;
+    grid-template-columns: 86px 1fr;
+    width: 300px;
+    min-height: 0;
+    height: 96px;
+    max-height: 96px;
+    overflow: hidden;
+    border: 4.5px solid #55bb99;
+    border-radius: 5px;
+    background: #d9ffc0;
+    box-sizing: border-box;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+.card-info-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: #7d8987;
+    border-right: 4.5px solid #55bb99;
+}
+
+.card-info-image img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.card-info-body {
+    display: grid;
+    grid-template-rows: 30px 30px 26px;
+    min-width: 0;
+}
+
+.card-info-name,
+.card-info-effect,
+.card-info-description {
+    min-width: 0;
+    padding: 0 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.card-info-name {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #ddffcc;
+    border: 3px double #55bb99;
+    border-radius: 0 6px 0 0;
+    color: #173d2f;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.card-info-name-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-info-effect {
+    display: flex;
+    align-items: center;
+    background: #ddffcc;
+    color: #182f22;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.card-info-panel.mp-cost-card-info .card-info-effect {
+    justify-content: space-between;
+    gap: 6px;
+    padding-right: 4px;
+}
+
+.card-info-main-effect {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-info-mp-cost-badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 34px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: #7f72ff;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+}
+
+.card-info-description {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(85, 187, 153, 0.55);
+    background: #efffe2;
+    color: #315244;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.card-info-name.machine-attribute-name {
+    color: #d63832;
+}
+
+.card-info-name.electric-attribute-name,
+.card-info-name.management-attribute-name {
+    color: #d88900;
+}
+
+.card-info-name.material-attribute-name {
+    color: #b13bd0;
+}
+
+.card-info-name.control-attribute-name {
+    color: #3976d8;
+}
+
+.card-attribute-icon {
+    flex: 0 0 1em;
+    width: 1em;
+    height: 1em;
+    object-fit: contain;
+}
+
+.attribute-guide-container {
+    display: block;
+}
+
+.attribute-guide-page {
+    max-width: 760px;
+}
+
+.attribute-guide-box,
+.attribute-guide-note {
+    border: 1px solid #008f6f;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.45);
+    overflow: hidden;
+}
+
+.attribute-guide-note {
+    margin-top: 24px;
+}
+
+.attribute-guide-box p,
+.attribute-guide-note p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 35px;
+    margin: 0;
+    padding: 6px 10px;
+    border-bottom: 1px solid #008f6f;
+    font-size: 17px;
+}
+
+.attribute-guide-box p:last-child,
+.attribute-guide-note p:last-child {
+    border-bottom: 0;
+}
+
+.attribute-guide-icon,
+.attribute-guide-no-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    object-fit: contain;
+}
+
+.attribute-guide-no-icon {
+    border: 2px solid #7a9d8d;
+    background: #e9fff2;
+}
+
+.machine-attribute-name {
+    color: #d63832;
+}
+
+.material-attribute-name {
+    color: #b13bd0;
+}
+
+.electric-attribute-name,
+.management-attribute-name {
+    color: #d88900;
+}
+
+.control-attribute-name {
+    color: #3976d8;
+}
+
+@media (max-width: 1004px) {
+    .card-book-page {
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .card-book-top-bar {
+        grid-template-columns: 44px 1fr 44px;
+        gap: 6px;
+    }
+
+    .card-book-title-pill {
+        justify-self: center;
+    }
+
+    .card-book-top-spacer {
+        width: 44px;
+    }
+
+    .card-book-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 10px;
+        padding: 42px 14px 36px;
+    }
+
+    .card-book-sidebar {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+        padding-top: 0;
+    }
+
+    .card-book-filter {
+        min-height: 36px;
+        font-size: 13px;
+    }
+
+    .card-book-featured {
+        grid-column: 1;
+        grid-row: 2;
+        justify-content: center;
+        min-height: 92px;
+    }
+
+    .card-book-featured .card-info-panel {
+        width: min(100%, 300px);
+        height: 80px;
+        grid-template-columns: 76px 1fr;
+    }
+
+    .card-info-mp-cost-badge {
+        min-width: 44px;
+        height: 30px;
+        font-size: 13px;
+    }
+
+    .card-book-play-area {
+        grid-column: 1;
+        grid-row: 3;
+        padding: 10px 12px 28px;
+    }
+
+    .card-book-container {
+        width: 100%;
+        max-width: 340px;
+        margin: 0 auto;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .card-book-slot,
+    .card-book-icon-wrap {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+
+    .card-book-slot:hover,
+    .card-book-slot:focus-visible {
+        transform: none;
+    }
+
+    .card-book-preview {
+        display: none !important;
+    }
+
+    .card-book-bottom-bar {
+        padding: 0 28px;
+        font-size: 18px;
+    }
+}

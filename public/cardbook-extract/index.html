@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>カード紹介</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="card-book-page">
+        <header class="card-book-top-bar">
+            <div class="card-book-top-spacer" aria-hidden="true"></div>
+            <h1 class="card-book-title-pill">カード紹介</h1>
+            <button type="button" id="card-book-close" class="card-book-close-button" aria-label="閉じる">×</button>
+        </header>
+
+        <div class="card-book-layout">
+            <aside class="card-book-sidebar" aria-label="カードフィルター">
+                <button class="card-book-filter is-active" type="button" data-filter="all">すべて</button>
+                <button class="card-book-filter" type="button" data-filter="attack">攻撃</button>
+                <button class="card-book-filter" type="button" data-filter="defense">守備</button>
+                <button class="card-book-filter" type="button" data-filter="heal">回復</button>
+                <button class="card-book-filter" type="button" data-filter="magic">魔法</button>
+                <button class="card-book-filter" type="button" data-filter="element-machine">機械</button>
+                <button class="card-book-filter" type="button" data-filter="element-electric">電気</button>
+                <button class="card-book-filter" type="button" data-filter="element-material">物質</button>
+                <button class="card-book-filter" type="button" data-filter="element-management">経営</button>
+                <button class="card-book-filter" type="button" data-filter="element-control">制御</button>
+                <button class="card-book-filter" type="button" data-filter="attribute-guide">属性</button>
+            </aside>
+
+            <div id="card-book-featured" class="card-book-featured" aria-live="polite"></div>
+
+            <section class="card-book-play-area" aria-label="カード一覧">
+                <div id="card-book-container" class="card-book-container"></div>
+            </section>
+        </div>
+
+        <footer class="card-book-bottom-bar">
+            <div class="card-book-bottom-player-name">player1</div>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
